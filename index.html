@@ -1,0 +1,1814 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Ledger â€” budgeting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #fafaf7;
+    --bg-elev: #ffffff;
+    --bg-sunken: #f3f3ee;
+    --line: #e8e7e1;
+    --line-strong: #d9d8d0;
+    --ink: #1a1a17;
+    --ink-2: #4a4a44;
+    --ink-3: #8b8a82;
+    --good: oklch(0.55 0.14 150);
+    --good-soft: oklch(0.55 0.14 150 / 0.10);
+    --bad:  oklch(0.58 0.20 25);
+    --bad-soft: oklch(0.58 0.20 25 / 0.10);
+    --accent: oklch(0.55 0.14 150);
+    --warn: oklch(0.72 0.14 70);
+    --shadow-sm: 0 1px 2px rgba(20,20,18,0.04), 0 1px 1px rgba(20,20,18,0.03);
+    --shadow-md: 0 2px 6px rgba(20,20,18,0.05), 0 8px 24px rgba(20,20,18,0.06);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 7px;
+    --pad: 18px;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  [data-theme="dark"] {
+    --bg: #111110;
+    --bg-elev: #1b1b19;
+    --bg-sunken: #161614;
+    --line: #2a2a26;
+    --line-strong: #3a3a35;
+    --ink: #f0efe9;
+    --ink-2: #c3c2bb;
+    --ink-3: #807f78;
+    --good: oklch(0.72 0.16 150);
+    --good-soft: oklch(0.72 0.16 150 / 0.14);
+    --bad:  oklch(0.70 0.20 25);
+    --bad-soft: oklch(0.70 0.20 25 / 0.14);
+    --accent: oklch(0.72 0.16 150);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-md: 0 2px 6px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* ---------- app shell ---------- */
+  .app {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+    gap: 12px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.01em; font-size: 16px;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink);
+    color: var(--bg);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 12px; font-family: var(--mono);
+  }
+  .top-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 34px; height: 34px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: var(--ink-2);
+    transition: background .15s, border-color .15s;
+  }
+  .icon-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ---------- view pager ---------- */
+  .pager {
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  .pager-track {
+    display: flex;
+    width: 300%;
+    height: 100%;
+    transform: translate3d(-33.3333%, 0, 0);
+    transition: transform .35s cubic-bezier(.22,.61,.36,1);
+    will-change: transform;
+  }
+  .pager-track.dragging { transition: none; }
+  .page {
+    width: 33.3333%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 20px 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  .page::-webkit-scrollbar { width: 8px; }
+  .page::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+  /* ---------- bottom dots ---------- */
+  .dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 16px;
+  }
+  .dot {
+    background: none; border: none; padding: 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--ink-3);
+    font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+    font-weight: 500;
+    transition: color .2s;
+  }
+  .dot .pip {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--line-strong);
+    transition: background .2s, width .2s;
+  }
+  .dot.active { color: var(--ink); }
+  .dot.active .pip { background: var(--ink); width: 22px; border-radius: 3px; }
+  .dot-sep { color: var(--ink-3); font-family: var(--mono); font-size: 10px; opacity: .5; }
+
+  /* ---------- page headers ---------- */
+  .page-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+    padding: 6px 2px 16px;
+  }
+  .page-head h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  .page-head .sub {
+    color: var(--ink-3);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  /* ---------- shared card ---------- */
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-weight: 500;
+    color: var(--ink);
+    transition: background .15s, border-color .15s, transform .05s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--line-strong); background: var(--bg-sunken); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: var(--ink); color: var(--bg);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn-danger {
+    border-color: var(--bad);
+    color: var(--bad);
+  }
+  .btn-danger:hover { background: var(--bad-soft); }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--ink-2); padding: 6px 10px; }
+  .btn-ghost:hover { background: var(--bg-sunken); color: var(--ink); }
+
+  /* ---------- form ---------- */
+  .field {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .field label {
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .input, .select {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+  }
+  .input:focus, .select:focus {
+    border-color: var(--ink-2);
+    box-shadow: 0 0 0 3px var(--bg-sunken);
+  }
+  .input.mono { font-family: var(--mono); }
+
+  /* ---------- filter pills ---------- */
+  .filters {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 4px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    width: fit-content;
+  }
+  .pill {
+    border: none;
+    background: transparent;
+    color: var(--ink-3);
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-weight: 500;
+    font-size: 12.5px;
+    transition: background .15s, color .15s;
+  }
+  .pill:hover { color: var(--ink); }
+  .pill.active {
+    background: var(--bg-elev);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ---------- graph view ---------- */
+  .graph-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .totals {
+    display: flex; gap: 28px; align-items: baseline;
+  }
+  .total-block .label {
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .total-block .value {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-top: 4px;
+  }
+  .total-block.over .value { color: var(--bad); }
+  .total-block .delta {
+    font-size: 12px; color: var(--ink-3);
+    font-family: var(--mono); margin-top: 4px;
+  }
+  .total-block .delta.over { color: var(--bad); }
+  .total-block .delta.under { color: var(--good); }
+
+  .chart-card {
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+  .chart-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .chart-meta .limit-label {
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .limit-swatch {
+    width: 18px; height: 2px; background: var(--ink-3); border-radius: 1px;
+    border-top: 1px dashed var(--ink-3);
+    background: none;
+  }
+  canvas {
+    display: block; width: 100%; max-width: 100%;
+    image-rendering: -webkit-optimize-contrast;
+  }
+
+  .limit-controls {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+  }
+  .limit-controls .field { flex: 1; min-width: 0; }
+  .limit-controls .field-inline {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .limit-controls .field-inline label { white-space: nowrap; }
+
+  .custom-range {
+    display: flex; gap: 10px; align-items: center;
+    padding: 10px 0 0;
+  }
+  .custom-range.hidden { display: none; }
+
+  /* ---------- table ---------- */
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .add-form {
+    display: grid;
+    grid-template-columns: 1.2fr 1.4fr 1fr auto;
+    gap: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+    align-items: end;
+  }
+  .add-form .btn-primary { height: 38px; }
+
+  .table-card {
+    padding: 0;
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-sunken);
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--bg-sunken); }
+  td.amount { font-family: var(--mono); font-weight: 500; text-align: right; }
+  td.actions { text-align: right; white-space: nowrap; }
+  td.actions button { margin-left: 4px; }
+  .cat-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+  }
+  .cat-chip .swatch {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .empty {
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .empty .big {
+    font-size: 16px; color: var(--ink); font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  /* ---------- accounts ---------- */
+  .acct-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .acct-card {
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+  .acct-mark {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-weight: 600; font-size: 14px;
+    color: white;
+  }
+  .acct-info .name { font-weight: 600; font-size: 15px; }
+  .acct-info .meta { color: var(--ink-3); font-size: 12px; margin-top: 2px; font-family: var(--mono); }
+  .acct-value { text-align: right; }
+  .acct-value .val { font-family: var(--mono); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+  .acct-value .delta { font-size: 12px; margin-top: 2px; font-family: var(--mono); }
+  .acct-actions {
+    display: flex; gap: 6px; margin-top: 10px;
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+
+  /* ---------- modal ---------- */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(20,20,18,0.42);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+    z-index: 50;
+    backdrop-filter: blur(4px);
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    width: 100%; max-width: 460px;
+    padding: 22px;
+  }
+  .modal h3 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+  .modal .form-grid {
+    display: grid; gap: 12px; margin-bottom: 18px;
+  }
+  .modal .actions {
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg);
+    padding: 10px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-md);
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 60;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- hint badge ---------- */
+  .kbd-hint {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    color: var(--ink-3);
+    font-family: var(--mono); font-size: 10px;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    animation: fade-hint 4s ease-out forwards;
+    animation-delay: .5s;
+  }
+  .kbd-hint.left { left: 14px; }
+  .kbd-hint.right { right: 14px; }
+  @keyframes fade-hint {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .add-form { grid-template-columns: 1fr 1fr; }
+    .add-form .btn-primary { grid-column: 1 / -1; }
+    .totals { gap: 18px; }
+    .total-block .value { font-size: 26px; }
+    .page { padding: 4px 14px 24px; }
+    .topbar { padding: 12px 14px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">L</div>
+      <span>Ledger</span>
+    </div>
+    <div class="top-actions">
+      <button id="themeBtn" class="icon-btn" title="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="pager" id="pager">
+    <span class="kbd-hint left">â† accounts</span>
+    <span class="kbd-hint right">expenses â†’</span>
+    <div class="pager-track" id="track">
+
+      <!-- ====================== ACCOUNTS ====================== -->
+      <div class="page" data-page="accounts">
+        <div class="page-head">
+          <div>
+            <h1>Accounts</h1>
+            <div class="sub" id="acctSubtitle">â€” accounts tracked</div>
+          </div>
+          <button class="btn btn-primary" id="addAcctBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add account
+          </button>
+        </div>
+
+        <div class="acct-grid" id="acctGrid"></div>
+
+        <div class="chart-card card" style="margin-top: 6px;">
+          <div class="chart-meta">
+            <span>Account value over time</span>
+            <span id="acctLegend" style="display:flex; gap:14px; flex-wrap:wrap;"></span>
+          </div>
+          <canvas id="acctChart" height="260"></canvas>
+        </div>
+      </div>
+
+      <!-- ====================== GRAPH ====================== -->
+      <div class="page" data-page="graph">
+        <div class="page-head">
+          <div>
+            <h1>Expenses</h1>
+            <div class="sub" id="rangeLabel"></div>
+          </div>
+          <div class="filters" id="filters">
+            <button class="pill" data-filter="today">Today</button>
+            <button class="pill" data-filter="week">Last week</button>
+            <button class="pill active" data-filter="month">Last month</button>
+            <button class="pill" data-filter="year">Last year</button>
+            <button class="pill" data-filter="custom">Custom</button>
+          </div>
+        </div>
+
+        <div class="custom-range hidden" id="customRange">
+          <div class="field" style="flex:1;">
+            <label>From</label>
+            <input type="date" id="customFrom" class="input mono" />
+          </div>
+          <div class="field" style="flex:1;">
+            <label>To</label>
+            <input type="date" id="customTo" class="input mono" />
+          </div>
+        </div>
+
+        <div class="graph-header" style="margin-top: 18px;">
+          <div class="totals">
+            <div class="total-block" id="spentBlock">
+              <div class="label">Spent</div>
+              <div class="value" id="spentValue">$0.00</div>
+              <div class="delta" id="spentDelta">â€”</div>
+            </div>
+            <div class="total-block">
+              <div class="label" id="limitLabel">Limit</div>
+              <div class="value mono" id="limitValue">$0.00</div>
+              <div class="delta" id="limitMeta">â€”</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card card">
+          <div class="chart-meta">
+            <span id="chartCaption">cumulative spend</span>
+            <span class="limit-label">
+              <span class="limit-swatch"></span> limit threshold
+            </span>
+          </div>
+          <canvas id="expChart" height="260"></canvas>
+        </div>
+
+        <div class="limit-controls">
+          <div class="field-inline" style="flex:1;">
+            <label for="monthlyLimit">Monthly limit ($)</label>
+            <input type="number" id="monthlyLimit" class="input mono" min="0" step="50" style="max-width:180px;" />
+          </div>
+          <div class="sub" style="color: var(--ink-3); font-family: var(--mono); font-size:12px;">
+            scales per filter
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================== TABLE ====================== -->
+      <div class="page" data-page="table">
+        <div class="page-head">
+          <div>
+            <h1>Expense log</h1>
+            <div class="sub" id="tableSubtitle">â€” entries</div>
+          </div>
+          <div class="toolbar" style="margin-bottom:0;">
+            <button class="btn" id="exportBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Export JSON
+            </button>
+            <button class="btn" id="importBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Import JSON
+            </button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden />
+          </div>
+        </div>
+
+        <form class="add-form card" id="addForm">
+          <div class="field">
+            <label for="newDate">Date</label>
+            <input type="date" id="newDate" class="input mono" required />
+          </div>
+          <div class="field">
+            <label for="newCategory">Category</label>
+            <select id="newCategory" class="select"></select>
+          </div>
+          <div class="field">
+            <label for="newAmount">Amount ($)</label>
+            <input type="number" id="newAmount" class="input mono" min="0.01" step="0.01" placeholder="0.00" required />
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add expense
+          </button>
+        </form>
+
+        <div class="card table-card" id="tableCard">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 130px;">Date</th>
+                <th>Category</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="width: 120px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="tableEmpty" style="display:none;">
+            <div class="big">No expenses yet</div>
+            <div>Add one above to see it appear on the graph.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <nav class="dots" id="dots">
+    <button class="dot" data-page-idx="0">
+      <span class="pip"></span>
+      Accounts
+    </button>
+    <span class="dot-sep">â†</span>
+    <button class="dot active" data-page-idx="1">
+      <span class="pip"></span>
+      Expenses
+    </button>
+    <span class="dot-sep">â†’</span>
+    <button class="dot" data-page-idx="2">
+      <span class="pip"></span>
+      Log
+    </button>
+  </nav>
+</div>
+
+<!-- ============== MODAL: add/edit account ============== -->
+<div class="modal-backdrop" id="acctModal">
+  <div class="modal">
+    <h3 id="acctModalTitle">Add account</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="acctName">Bank / institution name</label>
+        <input type="text" id="acctName" class="input" placeholder="e.g. First National" />
+      </div>
+      <div class="field">
+        <label>Import CSV (optional)</label>
+        <button type="button" class="btn" id="acctCsvBtn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Choose CSV fileâ€¦
+        </button>
+        <input type="file" id="acctCsvFile" accept=".csv,text/csv" hidden />
+        <div id="acctCsvStatus" style="font-size:12px; color: var(--ink-3); font-family: var(--mono);"></div>
+        <div style="font-size:11px; color: var(--ink-3);">
+          CSV must have columns: <span class="mono" style="font-family:var(--mono);">Date</span>, <span class="mono" style="font-family:var(--mono);">Total Value</span>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-danger" id="acctDeleteBtn" style="display:none;">Delete</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn btn-ghost" id="acctCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="acctSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: edit expense ============== -->
+<div class="modal-backdrop" id="expModal">
+  <div class="modal">
+    <h3>Edit expense</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="editDate">Date</label>
+        <input type="date" id="editDate" class="input mono" />
+      </div>
+      <div class="field">
+        <label for="editCategory">Category</label>
+        <select id="editCategory" class="select"></select>
+      </div>
+      <div class="field">
+        <label for="editAmount">Amount ($)</label>
+        <input type="number" id="editAmount" class="input mono" min="0.01" step="0.01" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" id="expCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="expSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORE_EXP = 'budget_expenses';
+const STORE_ACCT = 'budget_accounts';
+const STORE_SETTINGS = 'budget_settings';
+
+const CATEGORIES = [
+  { id: 'food',          label: 'Food',           color: 'oklch(0.65 0.16 35)' },
+  { id: 'groceries',     label: 'Groceries',      color: 'oklch(0.60 0.14 150)' },
+  { id: 'gas',           label: 'Gas',            color: 'oklch(0.62 0.16 250)' },
+  { id: 'transit',       label: 'Transit',        color: 'oklch(0.65 0.12 220)' },
+  { id: 'rent',          label: 'Rent / Housing', color: 'oklch(0.55 0.14 290)' },
+  { id: 'utilities',     label: 'Utilities',      color: 'oklch(0.66 0.13 195)' },
+  { id: 'subscriptions', label: 'Subscriptions',  color: 'oklch(0.60 0.14 320)' },
+  { id: 'entertainment', label: 'Entertainment',  color: 'oklch(0.65 0.16 0)' },
+  { id: 'health',        label: 'Health',         color: 'oklch(0.62 0.13 165)' },
+  { id: 'shopping',      label: 'Shopping',       color: 'oklch(0.65 0.14 340)' },
+  { id: 'travel',        label: 'Travel',         color: 'oklch(0.62 0.15 90)' },
+  { id: 'other',         label: 'Other',          color: 'oklch(0.60 0.02 240)' },
+];
+const ACCOUNT_COLORS = [
+  'oklch(0.60 0.16 250)',
+  'oklch(0.65 0.16 35)',
+  'oklch(0.60 0.16 150)',
+  'oklch(0.60 0.16 320)',
+  'oklch(0.65 0.16 90)',
+  'oklch(0.60 0.14 200)',
+  'oklch(0.65 0.16 0)',
+];
+
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const fmtMoney = (n, signed = false) => {
+  const sign = signed && n > 0 ? '+' : (n < 0 ? 'âˆ’' : '');
+  const abs = Math.abs(n);
+  return sign + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const fmtMoneyShort = (n) => {
+  const abs = Math.abs(n);
+  if (abs >= 1000) return '$' + (n / 1000).toFixed(abs >= 10000 ? 0 : 1) + 'k';
+  return '$' + n.toFixed(0);
+};
+const fmtDate = (d) => {
+  const dt = (d instanceof Date) ? d : new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+const fmtDateShort = (d) => {
+  const dt = (d instanceof Date) ? d : new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+const todayISO = () => {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+};
+const toISO = (d) => [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+
+function load(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch (e) { return fallback; }
+}
+function save(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+let expenses = load(STORE_EXP, null);
+let accounts = load(STORE_ACCT, null);
+let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customFrom: null, customTo: null, theme: 'light' };
+
+// seed demo data first time
+if (!expenses) {
+  expenses = seedExpenses();
+  save(STORE_EXP, expenses);
+}
+if (!accounts) {
+  accounts = seedAccounts();
+  save(STORE_ACCT, accounts);
+}
+
+function seedExpenses() {
+  const out = [];
+  const now = new Date();
+  // Realistic ~5 weeks of expenses
+  const recipes = [
+    ['groceries', 60, 130],
+    ['groceries', 20, 60],
+    ['food', 12, 38],
+    ['food', 8, 22],
+    ['gas', 35, 65],
+    ['transit', 2.75, 12],
+    ['utilities', 80, 180],
+    ['subscriptions', 9.99, 19.99],
+    ['entertainment', 12, 65],
+    ['shopping', 25, 140],
+    ['health', 20, 90],
+    ['rent', 1450, 1450],
+  ];
+  for (let day = 40; day >= 0; day--) {
+    const d = new Date(now); d.setDate(d.getDate() - day);
+    // 1-3 entries per day, with rent on the 1st
+    const isFirst = d.getDate() === 1;
+    if (isFirst) {
+      out.push({ id: uid(), date: toISO(d), category: 'rent', amount: 1450 });
+    }
+    const n = Math.random() < 0.7 ? (Math.random() < 0.5 ? 1 : 2) : 0;
+    for (let i = 0; i < n; i++) {
+      const [cat, lo, hi] = recipes[Math.floor(Math.random() * (recipes.length - 1))];
+      const amt = +(lo + Math.random() * (hi - lo)).toFixed(2);
+      out.push({ id: uid(), date: toISO(d), category: cat, amount: amt });
+    }
+  }
+  return out;
+}
+
+function seedAccounts() {
+  const now = new Date();
+  const mkSeries = (startVal, drift, noise, points) => {
+    const series = [];
+    let v = startVal;
+    for (let i = 0; i < points; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (points - 1 - i) * 7);
+      v = v * (1 + drift) + (Math.random() - 0.5) * noise;
+      series.push({ date: toISO(d), value: +v.toFixed(2) });
+    }
+    return series;
+  };
+  return [
+    { id: uid(), name: 'First National Checking', color: ACCOUNT_COLORS[0], series: mkSeries(4200, 0.002, 200, 14) },
+    { id: uid(), name: 'Maple Credit Savings', color: ACCOUNT_COLORS[1], series: mkSeries(12800, 0.006, 150, 14) },
+  ];
+}
+
+/* ============================================================
+   PAGER (swipe + arrows)
+   ============================================================ */
+const pager = $('#pager');
+const track = $('#track');
+let currentPage = 1; // 0 = accounts, 1 = graph, 2 = table
+let drag = null;
+
+function gotoPage(idx, animate = true) {
+  currentPage = Math.max(0, Math.min(2, idx));
+  track.classList.toggle('dragging', !animate);
+  track.style.transform = `translate3d(${-currentPage * 33.3333}%, 0, 0)`;
+  $$('.dot').forEach(d => d.classList.toggle('active', +d.dataset.pageIdx === currentPage));
+  if (animate) {
+    // force reflow then re-enable transition next tick
+    requestAnimationFrame(() => track.classList.remove('dragging'));
+  }
+  // when arriving at a page, redraw its chart at correct size
+  requestAnimationFrame(() => {
+    if (currentPage === 0) drawAccountsChart();
+    if (currentPage === 1) drawExpenseChart();
+  });
+}
+
+// Pointer drag (mouse + touch)
+pager.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button, input, select, textarea, a, .modal-backdrop')) return;
+  drag = { x: e.clientX, y: e.clientY, startX: e.clientX, decided: false, horizontal: false, w: pager.clientWidth };
+  pager.setPointerCapture(e.pointerId);
+});
+pager.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.startX;
+  const dy = e.clientY - drag.y;
+  if (!drag.decided) {
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      drag.decided = true;
+      drag.horizontal = Math.abs(dx) > Math.abs(dy);
+      if (drag.horizontal) track.classList.add('dragging');
+    }
+  }
+  if (drag.horizontal) {
+    e.preventDefault();
+    const pct = (dx / drag.w) * 33.3333;
+    const base = -currentPage * 33.3333;
+    track.style.transform = `translate3d(${base + pct}%, 0, 0)`;
+  }
+});
+function endDrag(e) {
+  if (!drag) return;
+  if (drag.horizontal) {
+    const dx = e.clientX - drag.startX;
+    const threshold = drag.w * 0.18;
+    let next = currentPage;
+    if (dx < -threshold) next = Math.min(2, currentPage + 1);
+    else if (dx > threshold) next = Math.max(0, currentPage - 1);
+    gotoPage(next, true);
+  }
+  drag = null;
+}
+pager.addEventListener('pointerup', endDrag);
+pager.addEventListener('pointercancel', endDrag);
+
+// arrow keys
+window.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea, select')) return;
+  if ($('.modal-backdrop.open')) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); gotoPage(currentPage - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); gotoPage(currentPage + 1); }
+});
+
+// dot buttons
+$$('.dot').forEach(d => d.addEventListener('click', () => gotoPage(+d.dataset.pageIdx)));
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme || 'light');
+}
+$('#themeBtn').addEventListener('click', () => {
+  settings.theme = (settings.theme === 'dark') ? 'light' : 'dark';
+  save(STORE_SETTINGS, settings);
+  applyTheme();
+  redrawAll();
+});
+applyTheme();
+
+/* ============================================================
+   GRAPH VIEW
+   ============================================================ */
+const filterEl = $('#filters');
+const customRangeEl = $('#customRange');
+const monthlyLimitEl = $('#monthlyLimit');
+monthlyLimitEl.value = settings.monthlyLimit;
+
+filterEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p === btn));
+  settings.filter = btn.dataset.filter;
+  customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
+  if (settings.filter === 'custom') {
+    if (!settings.customFrom) {
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      settings.customFrom = toISO(d);
+      settings.customTo = todayISO();
+    }
+    $('#customFrom').value = settings.customFrom;
+    $('#customTo').value = settings.customTo;
+  }
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+// activate stored filter
+$$('.pill', filterEl).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
+customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
+
+$('#customFrom').addEventListener('change', (e) => {
+  settings.customFrom = e.target.value;
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+$('#customTo').addEventListener('change', (e) => {
+  settings.customTo = e.target.value;
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+monthlyLimitEl.addEventListener('input', (e) => {
+  const n = +e.target.value;
+  if (Number.isFinite(n) && n >= 0) {
+    settings.monthlyLimit = n;
+    save(STORE_SETTINGS, settings);
+    renderGraph();
+  }
+});
+
+function getRange() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const f = settings.filter;
+  let from, to = new Date(now); to.setHours(23,59,59,999);
+  if (f === 'today') {
+    from = new Date(now);
+  } else if (f === 'week') {
+    from = new Date(now); from.setDate(from.getDate() - 6);
+  } else if (f === 'year') {
+    from = new Date(now); from.setDate(from.getDate() - 364);
+  } else if (f === 'custom') {
+    from = settings.customFrom ? new Date(settings.customFrom + 'T00:00:00') : new Date(now);
+    to   = settings.customTo   ? new Date(settings.customTo   + 'T23:59:59') : new Date(now);
+    if (from > to) [from, to] = [to, from];
+  } else { // month
+    from = new Date(now); from.setDate(from.getDate() - 29);
+  }
+  return { from, to };
+}
+
+function daysInCurrentMonth() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
+function getScaledLimit() {
+  const monthly = +settings.monthlyLimit || 0;
+  const dim = daysInCurrentMonth();
+  const perDay = monthly / dim;
+  const f = settings.filter;
+  if (f === 'today')  return { limit: perDay,             windowDays: 1,   label: 'Daily limit' };
+  if (f === 'week')   return { limit: perDay * 7,         windowDays: 7,   label: 'Weekly limit' };
+  if (f === 'year')   return { limit: monthly * 12,       windowDays: 365, label: 'Yearly limit' };
+  if (f === 'custom') {
+    const { from, to } = getRange();
+    const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    return { limit: perDay * days, windowDays: days, label: 'Range limit' };
+  }
+  return { limit: monthly, windowDays: dim, label: 'Monthly limit' };
+}
+
+function rangeLabel() {
+  const { from, to } = getRange();
+  const f = settings.filter;
+  if (f === 'today') return fmtDate(from);
+  return `${fmtDateShort(from)} â€“ ${fmtDateShort(to)}`;
+}
+
+function filteredExpenses() {
+  const { from, to } = getRange();
+  const f = from.getTime(), t = to.getTime();
+  return expenses
+    .filter(x => {
+      const ts = new Date(x.date + 'T12:00:00').getTime();
+      return ts >= f && ts <= t;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderGraph() {
+  const list = filteredExpenses();
+  const total = list.reduce((s, x) => s + (+x.amount || 0), 0);
+  const { limit, label } = getScaledLimit();
+  const over = total > limit && limit > 0;
+
+  $('#spentValue').textContent = fmtMoney(total);
+  $('#spentBlock').classList.toggle('over', over);
+  $('#limitValue').textContent = fmtMoney(limit);
+  $('#limitLabel').textContent = label;
+
+  if (limit > 0) {
+    const pct = (total / limit) * 100;
+    const remaining = limit - total;
+    const deltaEl = $('#spentDelta');
+    deltaEl.textContent = over
+      ? `${fmtMoney(total - limit)} over limit Â· ${pct.toFixed(0)}%`
+      : `${fmtMoney(remaining)} remaining Â· ${pct.toFixed(0)}%`;
+    deltaEl.className = 'delta ' + (over ? 'over' : 'under');
+    $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+  } else {
+    $('#spentDelta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+    $('#spentDelta').className = 'delta';
+    $('#limitMeta').textContent = 'set a limit below';
+  }
+  $('#rangeLabel').textContent = rangeLabel();
+  $('#chartCaption').textContent = settings.filter === 'today' ? 'cumulative spend (today, hourly)' : 'cumulative spend';
+
+  drawExpenseChart();
+}
+
+/* ============================================================
+   EXPENSE CHART (canvas)
+   ============================================================ */
+const expCanvas = $('#expChart');
+function drawExpenseChart() {
+  const c = expCanvas;
+  const css = getComputedStyle(document.documentElement);
+  const inkCol = css.getPropertyValue('--ink').trim();
+  const ink3   = css.getPropertyValue('--ink-3').trim();
+  const lineCol = css.getPropertyValue('--line').trim();
+  const goodCol = css.getPropertyValue('--good').trim();
+  const goodSoft = css.getPropertyValue('--good-soft').trim();
+  const badCol  = css.getPropertyValue('--bad').trim();
+  const badSoft = css.getPropertyValue('--bad-soft').trim();
+
+  const list = filteredExpenses();
+  const { from, to } = getRange();
+  const { limit } = getScaledLimit();
+
+  const dpr = window.devicePixelRatio || 1;
+  const wCss = c.clientWidth;
+  const hCss = 260;
+  c.width = wCss * dpr;
+  c.height = hCss * dpr;
+  c.style.height = hCss + 'px';
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, wCss, hCss);
+
+  const pad = { l: 56, r: 18, t: 18, b: 30 };
+  const W = wCss - pad.l - pad.r;
+  const H = hCss - pad.t - pad.b;
+
+  // Build cumulative series:
+  let points;
+  if (settings.filter === 'today') {
+    // hourly buckets across 24 hours
+    const buckets = Array.from({ length: 24 }, () => 0);
+    list.forEach(x => {
+      // Treat all as midnight; instead distribute evenly through day for clarity.
+      // We have no per-entry hour; place at index based on creation rank.
+    });
+    // Better: cumulative by entry order across the day, evenly spaced.
+    const series = [];
+    let cum = 0;
+    list.forEach((x, i) => {
+      cum += +x.amount;
+      series.push({ t: i + 1, y: cum });
+    });
+    points = { type: 'today', series, total: cum };
+  } else {
+    // daily buckets between from..to
+    const dayMs = 86400000;
+    const totalDays = Math.max(1, Math.round((to - from) / dayMs) + 1);
+    const buckets = new Map();
+    list.forEach(x => {
+      const key = x.date;
+      buckets.set(key, (buckets.get(key) || 0) + (+x.amount || 0));
+    });
+    const series = [];
+    let cum = 0;
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(from); d.setDate(d.getDate() + i);
+      const key = toISO(d);
+      cum += buckets.get(key) || 0;
+      series.push({ t: i, y: cum, date: d });
+    }
+    points = { type: 'daily', series, total: cum };
+  }
+
+  const total = points.total;
+  const maxY = Math.max(limit * 1.1, total * 1.05, 10);
+
+  // Y gridlines
+  const ticks = niceTicks(0, maxY, 4);
+  ctx.font = '11px ' + css.getPropertyValue('--mono');
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = ink3;
+  ctx.strokeStyle = lineCol;
+  ctx.lineWidth = 1;
+  ticks.forEach(t => {
+    const y = pad.t + H - (t / maxY) * H;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(pad.l + W, y);
+    ctx.stroke();
+    ctx.fillText(fmtMoneyShort(t), pad.l - 8, y);
+  });
+
+  // X axis labels
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'center';
+  const xCount = Math.min(6, Math.max(2, points.series.length));
+  for (let i = 0; i < xCount; i++) {
+    const idx = Math.round(i * (points.series.length - 1) / Math.max(1, xCount - 1));
+    if (idx < 0 || idx >= points.series.length) continue;
+    const pt = points.series[idx];
+    const x = pad.l + (points.series.length <= 1 ? W / 2 : (idx / (points.series.length - 1)) * W);
+    let lbl;
+    if (points.type === 'today') lbl = '#' + (idx + 1);
+    else lbl = fmtDateShort(pt.date);
+    ctx.fillStyle = ink3;
+    ctx.fillText(lbl, x, pad.t + H + 6);
+  }
+
+  // Build the line path
+  const xAt = (i) => pad.l + (points.series.length <= 1 ? W / 2 : (i / Math.max(1, points.series.length - 1)) * W);
+  const yAt = (v) => pad.t + H - (v / maxY) * H;
+
+  // Limit line (dashed)
+  if (limit > 0 && limit <= maxY) {
+    const ly = yAt(limit);
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = ink3;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, ly);
+    ctx.lineTo(pad.l + W, ly);
+    ctx.stroke();
+    ctx.restore();
+    // label
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = ink3;
+    ctx.fillText('limit ' + fmtMoneyShort(limit), pad.l + W, ly - 4);
+  }
+
+  // Determine color based on whether total exceeds limit
+  const over = limit > 0 && total > limit;
+  const stroke = over ? badCol : goodCol;
+  const fill = over ? badSoft : goodSoft;
+
+  if (points.series.length === 0) {
+    ctx.fillStyle = ink3;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '13px ' + css.getPropertyValue('--sans');
+    ctx.fillText('No expenses in this range', pad.l + W / 2, pad.t + H / 2);
+    return;
+  }
+
+  // Build line (start from 0 at first point for visual)
+  const pts = points.series.map((p, i) => ({ x: xAt(i), y: yAt(p.y) }));
+  // Insert a zero-baseline at the leftmost x for area fill
+  // Fill area
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pad.t + H);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, pad.t + H);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  // Stroke line (stepped feel: smooth)
+  ctx.beginPath();
+  pts.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2.25;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // End-point dot
+  const last = pts[pts.length - 1];
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = stroke;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 7, 0, Math.PI * 2);
+  ctx.strokeStyle = stroke;
+  ctx.globalAlpha = 0.25;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function niceTicks(min, max, count) {
+  if (max <= min) max = min + 1;
+  const range = niceNum(max - min, false);
+  const step = niceNum(range / count, true);
+  const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = niceMin; v <= niceMax + 1e-9; v += step) ticks.push(+v.toFixed(2));
+  return ticks;
+}
+function niceNum(range, round) {
+  const exp = Math.floor(Math.log10(range));
+  const frac = range / Math.pow(10, exp);
+  let nice;
+  if (round) {
+    if (frac < 1.5) nice = 1;
+    else if (frac < 3) nice = 2;
+    else if (frac < 7) nice = 5;
+    else nice = 10;
+  } else {
+    if (frac <= 1) nice = 1;
+    else if (frac <= 2) nice = 2;
+    else if (frac <= 5) nice = 5;
+    else nice = 10;
+  }
+  return nice * Math.pow(10, exp);
+}
+
+/* ============================================================
+   TABLE VIEW
+   ============================================================ */
+function fillCategoryOptions(select) {
+  select.innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+}
+fillCategoryOptions($('#newCategory'));
+fillCategoryOptions($('#editCategory'));
+$('#newDate').value = todayISO();
+
+const tbody = $('#tbody');
+function renderTable() {
+  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+  $('#tableSubtitle').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
+  $('#tableEmpty').style.display = expenses.length === 0 ? 'block' : 'none';
+  tbody.innerHTML = sorted.map(x => {
+    const cat = CATEGORIES.find(c => c.id === x.category) || CATEGORIES.at(-1);
+    return `
+      <tr>
+        <td class="mono" style="font-family: var(--mono); color: var(--ink-2);">${fmtDate(x.date)}</td>
+        <td><span class="cat-chip"><span class="swatch" style="background:${cat.color}"></span>${cat.label}</span></td>
+        <td class="amount">${fmtMoney(x.amount)}</td>
+        <td class="actions">
+          <button class="btn btn-ghost" data-edit="${x.id}" title="Edit">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-ghost" data-del="${x.id}" title="Delete">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+tbody.addEventListener('click', (e) => {
+  const ed = e.target.closest('[data-edit]');
+  const del = e.target.closest('[data-del]');
+  if (ed) openEditExpense(ed.dataset.edit);
+  if (del) {
+    const x = expenses.find(x => x.id === del.dataset.del);
+    if (!x) return;
+    if (confirm(`Delete ${fmtMoney(x.amount)} expense on ${fmtDate(x.date)}?`)) {
+      expenses = expenses.filter(e => e.id !== del.dataset.del);
+      save(STORE_EXP, expenses);
+      redrawAll();
+      toast('Expense deleted');
+    }
+  }
+});
+
+$('#addForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const date = $('#newDate').value;
+  const category = $('#newCategory').value;
+  const amount = +$('#newAmount').value;
+  if (!date || !category || !(amount > 0)) return;
+  expenses.push({ id: uid(), date, category, amount });
+  save(STORE_EXP, expenses);
+  $('#newAmount').value = '';
+  redrawAll();
+  toast('Expense added');
+});
+
+let editingId = null;
+function openEditExpense(id) {
+  const x = expenses.find(e => e.id === id);
+  if (!x) return;
+  editingId = id;
+  $('#editDate').value = x.date;
+  $('#editCategory').value = x.category;
+  $('#editAmount').value = x.amount;
+  $('#expModal').classList.add('open');
+}
+$('#expCancelBtn').addEventListener('click', () => { $('#expModal').classList.remove('open'); editingId = null; });
+$('#expSaveBtn').addEventListener('click', () => {
+  if (!editingId) return;
+  const x = expenses.find(e => e.id === editingId);
+  if (!x) return;
+  x.date = $('#editDate').value;
+  x.category = $('#editCategory').value;
+  x.amount = +$('#editAmount').value;
+  save(STORE_EXP, expenses);
+  $('#expModal').classList.remove('open');
+  editingId = null;
+  redrawAll();
+  toast('Expense updated');
+});
+$('#expModal').addEventListener('click', (e) => { if (e.target === $('#expModal')) { $('#expModal').classList.remove('open'); editingId = null; } });
+
+/* ---------- export / import JSON ---------- */
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'budget_expenses.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('Exported budget_expenses.json');
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('Expected an array');
+    const clean = data
+      .filter(d => d && d.date && d.category && Number.isFinite(+d.amount))
+      .map(d => ({
+        id: d.id || uid(),
+        date: d.date,
+        category: d.category,
+        amount: +d.amount,
+      }));
+    if (!clean.length) throw new Error('No valid entries');
+    const choice = confirm(`Import ${clean.length} entries.\n\nOK = merge with existing.\nCancel = replace all.`);
+    if (choice) {
+      // merge by id
+      const byId = new Map(expenses.map(x => [x.id, x]));
+      clean.forEach(x => byId.set(x.id, x));
+      expenses = [...byId.values()];
+    } else {
+      expenses = clean;
+    }
+    save(STORE_EXP, expenses);
+    redrawAll();
+    toast(`Imported ${clean.length} entries`);
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+  } finally {
+    e.target.value = '';
+  }
+});
+
+/* ============================================================
+   ACCOUNTS VIEW
+   ============================================================ */
+const acctGrid = $('#acctGrid');
+function renderAccounts() {
+  $('#acctSubtitle').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} tracked`;
+  if (accounts.length === 0) {
+    acctGrid.innerHTML = `
+      <div class="card" style="padding: 38px 20px; text-align:center; color: var(--ink-3);">
+        <div style="font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;">No accounts yet</div>
+        <div>Tap â€œAdd accountâ€ to start tracking.</div>
+      </div>`;
+  } else {
+    acctGrid.innerHTML = accounts.map(a => {
+      const series = a.series || [];
+      const latest = series.at(-1);
+      const first = series[0];
+      const value = latest ? latest.value : 0;
+      const delta = first && latest ? latest.value - first.value : 0;
+      const pct = first && first.value ? (delta / first.value) * 100 : 0;
+      const points = series.length;
+      const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+      const deltaColor = delta >= 0 ? 'var(--good)' : 'var(--bad)';
+      return `
+        <div class="card acct-card">
+          <div class="acct-mark" style="background:${a.color}">${initials}</div>
+          <div class="acct-info">
+            <div class="name">${escapeHtml(a.name)}</div>
+            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' Â· last ' + fmtDateShort(latest.date) : ''}</div>
+          </div>
+          <div class="acct-value">
+            <div class="val">${fmtMoney(value)}</div>
+            <div class="delta" style="color:${deltaColor}">${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
+          </div>
+          <div class="acct-actions">
+            <button class="btn" data-edit-acct="${a.id}">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit / import CSV
+            </button>
+            <button class="btn btn-danger" data-del-acct="${a.id}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  drawAccountsChart();
+  renderAcctLegend();
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+acctGrid.addEventListener('click', (e) => {
+  const ed = e.target.closest('[data-edit-acct]');
+  const del = e.target.closest('[data-del-acct]');
+  if (ed) openAccountModal(ed.dataset.editAcct);
+  if (del) {
+    const a = accounts.find(x => x.id === del.dataset.delAcct);
+    if (!a) return;
+    if (confirm(`Delete account "${a.name}"? Its data will be lost.`)) {
+      accounts = accounts.filter(x => x.id !== a.id);
+      save(STORE_ACCT, accounts);
+      renderAccounts();
+      toast('Account deleted');
+    }
+  }
+});
+
+/* ---------- account modal ---------- */
+let editingAcctId = null;
+let pendingSeries = null;
+
+$('#addAcctBtn').addEventListener('click', () => openAccountModal(null));
+function openAccountModal(id) {
+  editingAcctId = id;
+  pendingSeries = null;
+  if (id) {
+    const a = accounts.find(x => x.id === id);
+    $('#acctModalTitle').textContent = 'Edit account';
+    $('#acctName').value = a.name;
+    $('#acctCsvStatus').textContent = `${(a.series || []).length} data points stored. Importing CSV replaces them.`;
+    $('#acctDeleteBtn').style.display = 'inline-flex';
+  } else {
+    $('#acctModalTitle').textContent = 'Add account';
+    $('#acctName').value = '';
+    $('#acctCsvStatus').textContent = '';
+    $('#acctDeleteBtn').style.display = 'none';
+  }
+  $('#acctModal').classList.add('open');
+  setTimeout(() => $('#acctName').focus(), 50);
+}
+$('#acctCancelBtn').addEventListener('click', () => $('#acctModal').classList.remove('open'));
+$('#acctModal').addEventListener('click', (e) => { if (e.target === $('#acctModal')) $('#acctModal').classList.remove('open'); });
+$('#acctDeleteBtn').addEventListener('click', () => {
+  if (!editingAcctId) return;
+  const a = accounts.find(x => x.id === editingAcctId);
+  if (!a) return;
+  if (confirm(`Delete account "${a.name}"?`)) {
+    accounts = accounts.filter(x => x.id !== editingAcctId);
+    save(STORE_ACCT, accounts);
+    $('#acctModal').classList.remove('open');
+    renderAccounts();
+    toast('Account deleted');
+  }
+});
+$('#acctSaveBtn').addEventListener('click', () => {
+  const name = $('#acctName').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  if (editingAcctId) {
+    const a = accounts.find(x => x.id === editingAcctId);
+    a.name = name;
+    if (pendingSeries) a.series = pendingSeries;
+    save(STORE_ACCT, accounts);
+    toast('Account updated');
+  } else {
+    const color = ACCOUNT_COLORS[accounts.length % ACCOUNT_COLORS.length];
+    accounts.push({ id: uid(), name, color, series: pendingSeries || [] });
+    save(STORE_ACCT, accounts);
+    toast('Account added');
+  }
+  $('#acctModal').classList.remove('open');
+  renderAccounts();
+});
+
+$('#acctCsvBtn').addEventListener('click', () => $('#acctCsvFile').click());
+$('#acctCsvFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('Empty file');
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+    const di = headers.findIndex(h => h === 'date');
+    const vi = headers.findIndex(h => h === 'total value' || h === 'total_value' || h === 'value');
+    if (di < 0 || vi < 0) throw new Error('CSV must have "Date" and "Total Value" columns');
+    const series = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r[di] || !r[vi]) continue;
+      const date = normalizeDate(r[di]);
+      const value = +String(r[vi]).replace(/[$,\s]/g, '');
+      if (!date || !Number.isFinite(value)) continue;
+      series.push({ date, value });
+    }
+    series.sort((a, b) => a.date.localeCompare(b.date));
+    pendingSeries = series;
+    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' â€“ ' + fmtDateShort(series.at(-1).date) : ''}`;
+  } catch (err) {
+    $('#acctCsvStatus').textContent = 'âœ• ' + err.message;
+    pendingSeries = null;
+  } finally {
+    e.target.value = '';
+  }
+});
+
+function parseCSV(text) {
+  const out = [];
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i+1] === '"') { cell += '"'; i++; }
+      else if (c === '"') { inQ = false; }
+      else { cell += c; }
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (cell !== '' || row.length) { row.push(cell); out.push(row); row = []; cell = ''; }
+        if (c === '\r' && text[i+1] === '\n') i++;
+      } else cell += c;
+    }
+  }
+  if (cell !== '' || row.length) { row.push(cell); out.push(row); }
+  return out.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function normalizeDate(s) {
+  s = String(s).trim();
+  // ISO YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // US M/D/YYYY
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    let y = m[3];
+    if (y.length === 2) y = (+y > 50 ? '19' : '20') + y;
+    return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  }
+  const d = new Date(s);
+  if (!isNaN(d)) return toISO(d);
+  return null;
+}
+
+/* ---------- accounts chart ---------- */
+function renderAcctLegend() {
+  $('#acctLegend').innerHTML = accounts.map(a => `
+    <span style="display:inline-flex; align-items:center; gap:6px;">
+      <span style="width:10px; height:10px; border-radius:50%; background:${a.color};"></span>
+      <span style="color: var(--ink-2);">${escapeHtml(a.name)}</span>
+    </span>
+  `).join('');
+}
+
+function drawAccountsChart() {
+  const c = $('#acctChart');
+  const css = getComputedStyle(document.documentElement);
+  const ink3 = css.getPropertyValue('--ink-3').trim();
+  const lineCol = css.getPropertyValue('--line').trim();
+
+  const dpr = window.devicePixelRatio || 1;
+  const wCss = c.clientWidth;
+  const hCss = 260;
+  c.width = wCss * dpr;
+  c.height = hCss * dpr;
+  c.style.height = hCss + 'px';
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, wCss, hCss);
+
+  const pad = { l: 60, r: 18, t: 18, b: 30 };
+  const W = wCss - pad.l - pad.r;
+  const H = hCss - pad.t - pad.b;
+
+  const allSeries = accounts.filter(a => (a.series || []).length).map(a => ({
+    name: a.name, color: a.color, points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
+  }));
+
+  if (allSeries.length === 0) {
+    ctx.fillStyle = ink3;
+    ctx.font = '13px ' + css.getPropertyValue('--sans');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Add an account with a CSV to see its history here', pad.l + W / 2, pad.t + H / 2);
+    return;
+  }
+
+  // Compute global date range and value range
+  let minT = Infinity, maxT = -Infinity, maxV = -Infinity, minV = Infinity;
+  allSeries.forEach(s => s.points.forEach(p => {
+    const t = new Date(p.date + 'T12:00:00').getTime();
+    if (t < minT) minT = t;
+    if (t > maxT) maxT = t;
+    if (p.value > maxV) maxV = p.value;
+    if (p.value < minV) minV = p.value;
+  }));
+  if (minT === maxT) maxT = minT + 86400000;
+  if (minV === maxV) { maxV = minV + 100; minV -= 100; }
+  // Pad value
+  const vPad = (maxV - minV) * 0.08;
+  const vMin = Math.max(0, minV - vPad);
+  const vMax = maxV + vPad;
+
+  // Y axis ticks
+  const ticks = niceTicks(vMin, vMax, 4);
+  ctx.font = '11px ' + css.getPropertyValue('--mono');
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  ctx.strokeStyle = lineCol;
+  ctx.lineWidth = 1;
+  ticks.forEach(t => {
+    if (t < vMin - 1e-6 || t > vMax + 1e-6) return;
+    const y = pad.t + H - ((t - vMin) / (vMax - vMin)) * H;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + W, y); ctx.stroke();
+    ctx.fillStyle = ink3;
+    ctx.fillText(fmtMoneyShort(t), pad.l - 8, y);
+  });
+
+  // X axis date labels
+  const xCount = 5;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let i = 0; i < xCount; i++) {
+    const t = minT + (i / (xCount - 1)) * (maxT - minT);
+    const x = pad.l + (i / (xCount - 1)) * W;
+    ctx.fillStyle = ink3;
+    ctx.fillText(fmtDateShort(new Date(t)), x, pad.t + H + 6);
+  }
+
+  // Draw each series
+  allSeries.forEach(s => {
+    ctx.beginPath();
+    s.points.forEach((p, i) => {
+      const t = new Date(p.date + 'T12:00:00').getTime();
+      const x = pad.l + ((t - minT) / (maxT - minT)) * W;
+      const y = pad.t + H - ((p.value - vMin) / (vMax - vMin)) * H;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2.25;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // End dot
+    const last = s.points.at(-1);
+    const tx = new Date(last.date + 'T12:00:00').getTime();
+    const x = pad.l + ((tx - minT) / (maxT - minT)) * W;
+    const y = pad.t + H - ((last.value - vMin) / (vMax - vMin)) * H;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = s.color; ctx.fill();
+  });
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ============================================================
+   REDRAW + RESIZE
+   ============================================================ */
+function redrawAll() {
+  renderTable();
+  renderAccounts();
+  renderGraph();
+}
+
+let resizeRaf;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => {
+    drawExpenseChart();
+    drawAccountsChart();
+  });
+});
+
+// initial render
+redrawAll();
+gotoPage(1, false);
+</script>
+</body>
+</html>
+
