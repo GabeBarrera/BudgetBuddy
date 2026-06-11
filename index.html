@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Ledger â€” budgeting</title>
+<title>BudgetBuddy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -523,8 +523,8 @@
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark">L</div>
-      <span>Ledger</span>
+      <div class="brand-mark">B</div>
+      <span>BudgetBuddy</span>
     </div>
     <div class="top-actions">
       <button id="themeBtn" class="icon-btn" title="Toggle theme">
@@ -637,6 +637,10 @@
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               Export JSON
             </button>
+            <button class="btn" id="exportCsvBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Export CSV
+            </button>
             <button class="btn" id="importBtn">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
               Import JSON
@@ -691,12 +695,10 @@
       <span class="pip"></span>
       Accounts
     </button>
-    <span class="dot-sep">â†</span>
     <button class="dot active" data-page-idx="1">
       <span class="pip"></span>
       Expenses
     </button>
-    <span class="dot-sep">â†’</span>
     <button class="dot" data-page-idx="2">
       <span class="pip"></span>
       Log
@@ -838,69 +840,17 @@ let expenses = load(STORE_EXP, null);
 let accounts = load(STORE_ACCT, null);
 let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customFrom: null, customTo: null, theme: 'light' };
 
-// seed demo data first time
-if (!expenses) {
-  expenses = seedExpenses();
+// One-shot wipe of previously-seeded demo data.
+if (!settings.demoWiped) {
+  expenses = [];
+  accounts = [];
+  settings.demoWiped = true;
   save(STORE_EXP, expenses);
-}
-if (!accounts) {
-  accounts = seedAccounts();
   save(STORE_ACCT, accounts);
+  save(STORE_SETTINGS, settings);
 }
-
-function seedExpenses() {
-  const out = [];
-  const now = new Date();
-  // Realistic ~5 weeks of expenses
-  const recipes = [
-    ['groceries', 60, 130],
-    ['groceries', 20, 60],
-    ['food', 12, 38],
-    ['food', 8, 22],
-    ['gas', 35, 65],
-    ['transit', 2.75, 12],
-    ['utilities', 80, 180],
-    ['subscriptions', 9.99, 19.99],
-    ['entertainment', 12, 65],
-    ['shopping', 25, 140],
-    ['health', 20, 90],
-    ['rent', 1450, 1450],
-  ];
-  for (let day = 40; day >= 0; day--) {
-    const d = new Date(now); d.setDate(d.getDate() - day);
-    // 1-3 entries per day, with rent on the 1st
-    const isFirst = d.getDate() === 1;
-    if (isFirst) {
-      out.push({ id: uid(), date: toISO(d), category: 'rent', amount: 1450 });
-    }
-    const n = Math.random() < 0.7 ? (Math.random() < 0.5 ? 1 : 2) : 0;
-    for (let i = 0; i < n; i++) {
-      const [cat, lo, hi] = recipes[Math.floor(Math.random() * (recipes.length - 1))];
-      const amt = +(lo + Math.random() * (hi - lo)).toFixed(2);
-      out.push({ id: uid(), date: toISO(d), category: cat, amount: amt });
-    }
-  }
-  return out;
-}
-
-function seedAccounts() {
-  const now = new Date();
-  const mkSeries = (startVal, drift, noise, points) => {
-    const series = [];
-    let v = startVal;
-    for (let i = 0; i < points; i++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (points - 1 - i) * 7);
-      v = v * (1 + drift) + (Math.random() - 0.5) * noise;
-      series.push({ date: toISO(d), value: +v.toFixed(2) });
-    }
-    return series;
-  };
-  return [
-    { id: uid(), name: 'First National Checking', color: ACCOUNT_COLORS[0], series: mkSeries(4200, 0.002, 200, 14) },
-    { id: uid(), name: 'Maple Credit Savings', color: ACCOUNT_COLORS[1], series: mkSeries(12800, 0.006, 150, 14) },
-  ];
-}
+if (!expenses) { expenses = []; save(STORE_EXP, expenses); }
+if (!accounts) { accounts = []; save(STORE_ACCT, accounts); }
 
 /* ============================================================
    PAGER (swipe + arrows)
@@ -1434,6 +1384,27 @@ $('#exportBtn').addEventListener('click', () => {
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
   toast('Exported budget_expenses.json');
+});
+
+$('#exportCsvBtn').addEventListener('click', () => {
+  const esc = (v) => {
+    const s = String(v ?? '');
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+  const rows = [['Date', 'Category', 'Amount']];
+  sorted.forEach(x => {
+    const cat = CATEGORIES.find(c => c.id === x.category);
+    rows.push([x.date, cat ? cat.label : x.category, (+x.amount).toFixed(2)]);
+  });
+  const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'budget_expenses.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('Exported budget_expenses.csv');
 });
 $('#importBtn').addEventListener('click', () => $('#importFile').click());
 $('#importFile').addEventListener('change', async (e) => {
