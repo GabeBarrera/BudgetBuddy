@@ -304,6 +304,21 @@
   .chart-card {
     padding: 22px;
     margin-bottom: 18px;
+    position: relative;
+  }
+  .acct-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--ink);
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,.14);
+    z-index: 10;
   }
   .chart-meta {
     display: flex; justify-content: space-between; align-items: center;
@@ -543,7 +558,7 @@
         <div class="page-head">
           <div>
             <h1>Accounts</h1>
-            <div class="sub" id="acctSubtitle">â€” accounts tracked</div>
+            <div class="sub" id="acctSubtitle">– accounts tracked</div>
           </div>
           <button class="btn btn-primary" id="addAcctBtn">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -559,6 +574,7 @@
             <span id="acctLegend" style="display:flex; gap:14px; flex-wrap:wrap;"></span>
           </div>
           <canvas id="acctChart" height="260"></canvas>
+          <div id="acctTooltip" class="acct-tooltip" hidden></div>
         </div>
       </div>
 
@@ -594,12 +610,12 @@
             <div class="total-block" id="spentBlock">
               <div class="label">Spent</div>
               <div class="value" id="spentValue">$0.00</div>
-              <div class="delta" id="spentDelta">â€”</div>
+              <div class="delta" id="spentDelta">–</div>
             </div>
             <div class="total-block">
               <div class="label" id="limitLabel">Limit</div>
               <div class="value mono" id="limitValue">$0.00</div>
-              <div class="delta" id="limitMeta">â€”</div>
+              <div class="delta" id="limitMeta">–</div>
             </div>
           </div>
         </div>
@@ -630,7 +646,7 @@
         <div class="page-head">
           <div>
             <h1>Expense log</h1>
-            <div class="sub" id="tableSubtitle">â€” entries</div>
+            <div class="sub" id="tableSubtitle">– entries</div>
           </div>
           <div class="toolbar" style="margin-bottom:0;">
             <button class="btn" id="exportBtn">
@@ -719,7 +735,7 @@
         <label>Import CSV (optional)</label>
         <button type="button" class="btn" id="acctCsvBtn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-          Choose CSV fileâ€¦
+          Choose CSV file…
         </button>
         <input type="file" id="acctCsvFile" accept=".csv,text/csv" hidden />
         <div id="acctCsvStatus" style="font-size:12px; color: var(--ink-3); font-family: var(--mono);"></div>
@@ -802,7 +818,7 @@ const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const fmtMoney = (n, signed = false) => {
-  const sign = signed && n > 0 ? '+' : (n < 0 ? 'âˆ’' : '');
+  const sign = signed && n > 0 ? '+' : (n < 0 ? '−' : '');
   const abs = Math.abs(n);
   return sign + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
@@ -1034,7 +1050,7 @@ function rangeLabel() {
   const { from, to } = getRange();
   const f = settings.filter;
   if (f === 'today') return fmtDate(from);
-  return `${fmtDateShort(from)} â€“ ${fmtDateShort(to)}`;
+  return `${fmtDateShort(from)} – ${fmtDateShort(to)}`;
 }
 
 function filteredExpenses() {
@@ -1064,8 +1080,8 @@ function renderGraph() {
     const remaining = limit - total;
     const deltaEl = $('#spentDelta');
     deltaEl.textContent = over
-      ? `${fmtMoney(total - limit)} over limit Â· ${pct.toFixed(0)}%`
-      : `${fmtMoney(remaining)} remaining Â· ${pct.toFixed(0)}%`;
+      ? `${fmtMoney(total - limit)} over limit · ${pct.toFixed(0)}%`
+      : `${fmtMoney(remaining)} remaining · ${pct.toFixed(0)}%`;
     deltaEl.className = 'delta ' + (over ? 'over' : 'under');
     $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
   } else {
@@ -1448,14 +1464,15 @@ $('#importFile').addEventListener('change', async (e) => {
 const acctGrid = $('#acctGrid');
 function renderAccounts() {
   $('#acctSubtitle').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} tracked`;
+  acctGrid.innerHTML = '';
   if (accounts.length === 0) {
     acctGrid.innerHTML = `
-      <div class="card" style="padding: 38px 20px; text-align:center; color: var(--ink-3);">
-        <div style="font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;">No accounts yet</div>
-        <div>Tap â€œAdd accountâ€ to start tracking.</div>
+      <div class=”card” style=”padding: 38px 20px; text-align:center; color: var(--ink-3);”>
+        <div style=”font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;”>No accounts yet</div>
+        <div>Tap “Add account” to start tracking.</div>
       </div>`;
   } else {
-    acctGrid.innerHTML = accounts.map(a => {
+    accounts.forEach(a => {
       const series = a.series || [];
       const latest = series.at(-1);
       const first = series[0];
@@ -1465,27 +1482,36 @@ function renderAccounts() {
       const points = series.length;
       const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
       const deltaColor = delta >= 0 ? 'var(--good)' : 'var(--bad)';
-      return `
-        <div class="card acct-card">
-          <div class="acct-mark" style="background:${a.color}">${initials}</div>
-          <div class="acct-info">
-            <div class="name">${escapeHtml(a.name)}</div>
-            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' Â· last ' + fmtDateShort(latest.date) : ''}</div>
-          </div>
-          <div class="acct-value">
-            <div class="val">${fmtMoney(value)}</div>
-            <div class="delta" style="color:${deltaColor}">${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
-          </div>
-          <div class="acct-actions">
-            <button class="btn" data-edit-acct="${a.id}">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit / import CSV
-            </button>
-            <button class="btn btn-danger" data-del-acct="${a.id}">Delete</button>
-          </div>
+      const hidden = hiddenAccounts.has(a.id);
+
+      const card = document.createElement('div');
+      card.className = 'card acct-card';
+      card.innerHTML = `
+        <div class=”acct-mark” style=”background:${a.color};cursor:pointer;opacity:${hidden ? 0.35 : 1};transition:opacity .15s;” title=”${hidden ? 'Show on chart' : 'Hide from chart'}”>${initials}</div>
+        <div class=”acct-info”>
+          <div class=”name”>${escapeHtml(a.name)}</div>
+          <div class=”meta”>${points} data point${points === 1 ? '' : 's'}${latest ? ' · last ' + fmtDateShort(latest.date) : ''}</div>
+        </div>
+        <div class=”acct-value”>
+          <div class=”val”>${fmtMoney(value)}</div>
+          <div class=”delta” style=”color:${deltaColor}”>${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
+        </div>
+        <div class=”acct-actions”>
+          <button class=”btn” data-edit-acct=”${a.id}”>
+            <svg viewBox=”0 0 24 24” width=”13” height=”13” fill=”none” stroke=”currentColor” stroke-width=”2” stroke-linecap=”round” stroke-linejoin=”round”><path d=”M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7”/><path d=”M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z”/></svg>
+            Edit / import CSV
+          </button>
+          <button class=”btn btn-danger” data-del-acct=”${a.id}”>Delete</button>
         </div>
       `;
-    }).join('');
+
+      card.querySelector('.acct-mark').addEventListener('click', () => {
+        if (hiddenAccounts.has(a.id)) hiddenAccounts.delete(a.id); else hiddenAccounts.add(a.id);
+        renderAccounts();
+      });
+
+      acctGrid.appendChild(card);
+    });
   }
   drawAccountsChart();
   renderAcctLegend();
@@ -1589,9 +1615,9 @@ $('#acctCsvFile').addEventListener('change', async (e) => {
     }
     series.sort((a, b) => a.date.localeCompare(b.date));
     pendingSeries = series;
-    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' â€“ ' + fmtDateShort(series.at(-1).date) : ''}`;
+    $('#acctCsvStatus').textContent = `✓ ${series.length} rows loaded · ${series.length ? fmtDateShort(series[0].date) + ' – ' + fmtDateShort(series.at(-1).date) : ''}`;
   } catch (err) {
-    $('#acctCsvStatus').textContent = 'âœ• ' + err.message;
+    $('#acctCsvStatus').textContent = '✕ ' + err.message;
     pendingSeries = null;
   } finally {
     e.target.value = '';
@@ -1638,16 +1664,32 @@ function normalizeDate(s) {
 }
 
 /* ---------- accounts chart ---------- */
+let acctChartState = null;
+const hiddenAccounts = new Set();
+function interpolateVal(points, t) {
+  if (!points.length) return null;
+  const ts = points.map(p => new Date(p.date + 'T12:00:00').getTime());
+  if (t <= ts[0]) return points[0].value;
+  if (t >= ts[ts.length - 1]) return points[ts.length - 1].value;
+  for (let i = 0; i < ts.length - 1; i++) {
+    if (t >= ts[i] && t <= ts[i + 1]) {
+      const frac = (t - ts[i]) / (ts[i + 1] - ts[i]);
+      return points[i].value + frac * (points[i + 1].value - points[i].value);
+    }
+  }
+  return null;
+}
+
 function renderAcctLegend() {
   $('#acctLegend').innerHTML = accounts.map(a => `
-    <span style="display:inline-flex; align-items:center; gap:6px;">
-      <span style="width:10px; height:10px; border-radius:50%; background:${a.color};"></span>
-      <span style="color: var(--ink-2);">${escapeHtml(a.name)}</span>
+    <span style="display:inline-flex;align-items:center;gap:6px;">
+      <span style="width:10px;height:10px;border-radius:50%;background:${a.color};"></span>
+      <span style="color:var(--ink-2);">${escapeHtml(a.name)}</span>
     </span>
   `).join('');
 }
 
-function drawAccountsChart() {
+function drawAccountsChart(hoverT = null) {
   const c = $('#acctChart');
   const css = getComputedStyle(document.documentElement);
   const ink3 = css.getPropertyValue('--ink-3').trim();
@@ -1667,7 +1709,7 @@ function drawAccountsChart() {
   const W = wCss - pad.l - pad.r;
   const H = hCss - pad.t - pad.b;
 
-  const allSeries = accounts.filter(a => (a.series || []).length).map(a => ({
+  const allSeries = accounts.filter(a => (a.series || []).length && !hiddenAccounts.has(a.id)).map(a => ({
     name: a.name, color: a.color, points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
   }));
 
@@ -1675,7 +1717,10 @@ function drawAccountsChart() {
     ctx.fillStyle = ink3;
     ctx.font = '13px ' + css.getPropertyValue('--sans');
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('Add an account with a CSV to see its history here', pad.l + W / 2, pad.t + H / 2);
+    const msg = accounts.some(a => (a.series || []).length)
+      ? 'All accounts hidden — click a legend item to show'
+      : 'Add an account with a CSV to see its history here';
+    ctx.fillText(msg, pad.l + W / 2, pad.t + H / 2);
     return;
   }
 
@@ -1744,7 +1789,86 @@ function drawAccountsChart() {
     ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = s.color; ctx.fill();
   });
+
+  acctChartState = { minT, maxT, vMin, vMax, allSeries, pad, W, H, wCss, hCss };
+
+  if (hoverT !== null) {
+    const hx = pad.l + ((hoverT - minT) / (maxT - minT)) * W;
+    ctx.save();
+    ctx.beginPath();
+    ctx.strokeStyle = ink3;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(hx, pad.t);
+    ctx.lineTo(hx, pad.t + H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const bgElev = css.getPropertyValue('--bg-elev').trim();
+    allSeries.forEach(s => {
+      const val = interpolateVal(s.points, hoverT);
+      if (val === null) return;
+      const hy = pad.t + H - ((val - vMin) / (vMax - vMin)) * H;
+      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = bgElev; ctx.fill();
+      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+      ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.stroke();
+    });
+    ctx.restore();
+  }
 }
+
+/* ---------- accounts chart hover ---------- */
+$('#acctChart').addEventListener('mousemove', e => {
+  if (!acctChartState) return;
+  const { minT, maxT, vMin, vMax, allSeries, pad, W, H } = acctChartState;
+  const rect = e.target.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const tooltip = $('#acctTooltip');
+
+  if (x < pad.l || x > pad.l + W || y < pad.t || y > pad.t + H) {
+    if (!tooltip.hidden) { tooltip.hidden = true; drawAccountsChart(); }
+    return;
+  }
+
+  const hoverT = Math.max(minT, Math.min(maxT, minT + ((x - pad.l) / W) * (maxT - minT)));
+  let total = 0;
+  const rows = allSeries.map(s => {
+    const val = interpolateVal(s.points, hoverT);
+    if (val !== null) total += val;
+    return `<div style="display:flex;gap:14px;justify-content:space-between;align-items:center;margin-top:3px;">
+      <span style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
+        ${escapeHtml(s.name)}
+      </span>
+      <span style="color:var(--ink);">${val !== null ? fmtMoney(val) : '—'}</span>
+    </div>`;
+  }).join('');
+
+  tooltip.innerHTML = `
+    <div style="color:var(--ink-3);margin-bottom:5px;">${fmtDate(new Date(hoverT))}</div>
+    ${rows}
+    ${allSeries.length > 1 ? `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;display:flex;gap:14px;justify-content:space-between;">
+      <span style="color:var(--ink-2);">Total</span>
+      <span style="color:var(--ink);">${fmtMoney(total)}</span>
+    </div>` : ''}
+  `;
+
+  const cardRect = e.target.closest('.chart-card').getBoundingClientRect();
+  const hxRel = rect.left - cardRect.left + x;
+  const tipW = tooltip.offsetWidth || 180;
+  const tipLeft = hxRel + 16 + tipW < cardRect.width - 8 ? hxRel + 16 : hxRel - 16 - tipW;
+  tooltip.style.left = Math.max(4, tipLeft) + 'px';
+  tooltip.style.top = (rect.top - cardRect.top + pad.t) + 'px';
+  tooltip.hidden = false;
+
+  drawAccountsChart(hoverT);
+});
+
+$('#acctChart').addEventListener('mouseleave', () => {
+  $('#acctTooltip').hidden = true;
+  drawAccountsChart();
+});
 
 /* ============================================================
    TOAST
@@ -1782,4 +1906,6 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
+
+
 
