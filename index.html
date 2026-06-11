@@ -144,7 +144,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 56px;
     padding: 10px 0 16px;
   }
   .dot {
@@ -154,6 +154,7 @@
     font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
     font-weight: 500;
     transition: color .2s;
+    min-width: 64px;
   }
   .dot .pip {
     width: 6px; height: 6px; border-radius: 50%;
@@ -304,21 +305,6 @@
   .chart-card {
     padding: 22px;
     margin-bottom: 18px;
-    position: relative;
-  }
-  .acct-tooltip {
-    position: absolute;
-    pointer-events: none;
-    background: var(--bg-elev);
-    border: 1px solid var(--line-strong);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 12px;
-    font-family: var(--mono);
-    color: var(--ink);
-    white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(0,0,0,.14);
-    z-index: 10;
   }
   .chart-meta {
     display: flex; justify-content: space-between; align-items: center;
@@ -339,6 +325,47 @@
     display: block; width: 100%; max-width: 100%;
     image-rendering: -webkit-optimize-contrast;
   }
+  .canvas-wrap {
+    position: relative;
+  }
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    padding: 8px 10px;
+    font-size: 12px;
+    min-width: 140px;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity .12s;
+    z-index: 5;
+  }
+  .chart-tooltip.show { opacity: 1; }
+  .chart-tooltip .tt-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .chart-tooltip .tt-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 2px 0;
+  }
+  .chart-tooltip .tt-swatch {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .chart-tooltip .tt-name {
+    color: var(--ink-2); flex: 1; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    max-width: 160px;
+  }
+  .chart-tooltip .tt-val {
+    font-family: var(--mono); font-weight: 600; color: var(--ink);
+  }
 
   .limit-controls {
     display: flex; align-items: center; gap: 14px;
@@ -354,10 +381,13 @@
   .limit-controls .field-inline label { white-space: nowrap; }
 
   .custom-range {
-    display: flex; gap: 10px; align-items: center;
-    padding: 10px 0 0;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 14px 0 0;
   }
   .custom-range.hidden { display: none; }
+  .custom-pane {
+    display: flex; gap: 10px; align-items: flex-end;
+  }
 
   /* ---------- table ---------- */
   .toolbar {
@@ -558,7 +588,7 @@
         <div class="page-head">
           <div>
             <h1>Accounts</h1>
-            <div class="sub" id="acctSubtitle">– accounts tracked</div>
+            <div class="sub" id="acctSubtitle">â€” accounts tracked</div>
           </div>
           <button class="btn btn-primary" id="addAcctBtn">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -573,8 +603,10 @@
             <span>Account value over time</span>
             <span id="acctLegend" style="display:flex; gap:14px; flex-wrap:wrap;"></span>
           </div>
-          <canvas id="acctChart" height="260"></canvas>
-          <div id="acctTooltip" class="acct-tooltip" hidden></div>
+          <div class="canvas-wrap" id="acctCanvasWrap">
+            <canvas id="acctChart" height="260"></canvas>
+            <div class="chart-tooltip" id="acctTooltip"></div>
+          </div>
         </div>
       </div>
 
@@ -587,21 +619,44 @@
           </div>
           <div class="filters" id="filters">
             <button class="pill" data-filter="today">Today</button>
-            <button class="pill" data-filter="week">Last week</button>
-            <button class="pill active" data-filter="month">Last month</button>
-            <button class="pill" data-filter="year">Last year</button>
+            <button class="pill" data-filter="week">This week</button>
+            <button class="pill active" data-filter="month">This month</button>
+            <button class="pill" data-filter="ytd">YTD</button>
             <button class="pill" data-filter="custom">Custom</button>
           </div>
         </div>
 
         <div class="custom-range hidden" id="customRange">
-          <div class="field" style="flex:1;">
-            <label>From</label>
-            <input type="date" id="customFrom" class="input mono" />
+          <div class="filters" id="customMode" style="margin-bottom: 4px;">
+            <button class="pill active" data-mode="range">Date range</button>
+            <button class="pill" data-mode="month">Single month</button>
+            <button class="pill" data-mode="year">Single year</button>
           </div>
-          <div class="field" style="flex:1;">
-            <label>To</label>
-            <input type="date" id="customTo" class="input mono" />
+          <div class="custom-pane" data-pane="range">
+            <div class="field" style="flex:1;">
+              <label>From</label>
+              <input type="date" id="customFrom" class="input mono" />
+            </div>
+            <div class="field" style="flex:1;">
+              <label>To</label>
+              <input type="date" id="customTo" class="input mono" />
+            </div>
+          </div>
+          <div class="custom-pane" data-pane="month" style="display:none;">
+            <div class="field" style="flex:1;">
+              <label>Month</label>
+              <select id="customMonth" class="select"></select>
+            </div>
+            <div class="field" style="flex:1;">
+              <label>Year</label>
+              <select id="customYearM" class="select"></select>
+            </div>
+          </div>
+          <div class="custom-pane" data-pane="year" style="display:none;">
+            <div class="field" style="flex:1; max-width: 220px;">
+              <label>Year</label>
+              <select id="customYear" class="select"></select>
+            </div>
           </div>
         </div>
 
@@ -610,12 +665,12 @@
             <div class="total-block" id="spentBlock">
               <div class="label">Spent</div>
               <div class="value" id="spentValue">$0.00</div>
-              <div class="delta" id="spentDelta">–</div>
+              <div class="delta" id="spentDelta">â€”</div>
             </div>
             <div class="total-block">
               <div class="label" id="limitLabel">Limit</div>
               <div class="value mono" id="limitValue">$0.00</div>
-              <div class="delta" id="limitMeta">–</div>
+              <div class="delta" id="limitMeta">â€”</div>
             </div>
           </div>
         </div>
@@ -646,7 +701,7 @@
         <div class="page-head">
           <div>
             <h1>Expense log</h1>
-            <div class="sub" id="tableSubtitle">– entries</div>
+            <div class="sub" id="tableSubtitle">â€” entries</div>
           </div>
           <div class="toolbar" style="margin-bottom:0;">
             <button class="btn" id="exportBtn">
@@ -735,7 +790,7 @@
         <label>Import CSV (optional)</label>
         <button type="button" class="btn" id="acctCsvBtn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-          Choose CSV file…
+          Choose CSV fileâ€¦
         </button>
         <input type="file" id="acctCsvFile" accept=".csv,text/csv" hidden />
         <div id="acctCsvStatus" style="font-size:12px; color: var(--ink-3); font-family: var(--mono);"></div>
@@ -818,7 +873,7 @@ const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const fmtMoney = (n, signed = false) => {
-  const sign = signed && n > 0 ? '+' : (n < 0 ? '−' : '');
+  const sign = signed && n > 0 ? '+' : (n < 0 ? 'âˆ’' : '');
   const abs = Math.abs(n);
   return sign + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
@@ -854,7 +909,10 @@ function save(key, value) {
 
 let expenses = load(STORE_EXP, null);
 let accounts = load(STORE_ACCT, null);
-let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customFrom: null, customTo: null, theme: 'light' };
+let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customMode: 'range', customFrom: null, customTo: null, customMonth: null, customYearM: null, customYear: null, theme: 'light' };
+if (!settings.customMode) settings.customMode = 'range';
+// Migrate old 'year' filter (which meant trailing-year) to 'ytd'
+if (settings.filter === 'year') settings.filter = 'ytd';
 
 // One-shot wipe of previously-seeded demo data.
 if (!settings.demoWiped) {
@@ -970,21 +1028,68 @@ filterEl.addEventListener('click', (e) => {
   $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p === btn));
   settings.filter = btn.dataset.filter;
   customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
-  if (settings.filter === 'custom') {
-    if (!settings.customFrom) {
-      const d = new Date(); d.setDate(d.getDate() - 30);
-      settings.customFrom = toISO(d);
-      settings.customTo = todayISO();
-    }
-    $('#customFrom').value = settings.customFrom;
-    $('#customTo').value = settings.customTo;
-  }
+  if (settings.filter === 'custom') initCustomDefaults();
   save(STORE_SETTINGS, settings);
   renderGraph();
 });
 // activate stored filter
 $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
 customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
+
+/* ---------- custom mode setup ---------- */
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CURRENT_YEAR = new Date().getFullYear();
+const FIRST_YEAR = 2000;
+function buildYearOptions(sel, selected) {
+  sel.innerHTML = '';
+  for (let y = CURRENT_YEAR; y >= FIRST_YEAR; y--) {
+    const o = document.createElement('option');
+    o.value = String(y); o.textContent = String(y);
+    if (y === +selected) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+function buildMonthOptions(sel, selected) {
+  sel.innerHTML = '';
+  MONTH_NAMES.forEach((m, i) => {
+    const o = document.createElement('option');
+    o.value = String(i); o.textContent = m;
+    if (i === +selected) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function initCustomDefaults() {
+  if (!settings.customFrom) {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    settings.customFrom = toISO(d);
+    settings.customTo = todayISO();
+  }
+  if (settings.customYear == null)  settings.customYear  = CURRENT_YEAR - 1;
+  if (settings.customYearM == null) settings.customYearM = CURRENT_YEAR;
+  if (settings.customMonth == null) settings.customMonth = new Date().getMonth();
+  $('#customFrom').value = settings.customFrom;
+  $('#customTo').value = settings.customTo;
+  buildYearOptions($('#customYear'), settings.customYear);
+  buildYearOptions($('#customYearM'), settings.customYearM);
+  buildMonthOptions($('#customMonth'), settings.customMonth);
+  applyCustomMode();
+}
+function applyCustomMode() {
+  $$('.pill', $('#customMode')).forEach(p => p.classList.toggle('active', p.dataset.mode === settings.customMode));
+  $$('.custom-pane').forEach(p => p.style.display = (p.dataset.pane === settings.customMode) ? 'flex' : 'none');
+}
+// initial setup if custom is active
+if (settings.filter === 'custom') initCustomDefaults();
+
+$('#customMode').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  settings.customMode = btn.dataset.mode;
+  save(STORE_SETTINGS, settings);
+  applyCustomMode();
+  renderGraph();
+});
 
 $('#customFrom').addEventListener('change', (e) => {
   settings.customFrom = e.target.value;
@@ -993,6 +1098,21 @@ $('#customFrom').addEventListener('change', (e) => {
 });
 $('#customTo').addEventListener('change', (e) => {
   settings.customTo = e.target.value;
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+$('#customMonth').addEventListener('change', (e) => {
+  settings.customMonth = +e.target.value;
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+$('#customYearM').addEventListener('change', (e) => {
+  settings.customYearM = +e.target.value;
+  save(STORE_SETTINGS, settings);
+  renderGraph();
+});
+$('#customYear').addEventListener('change', (e) => {
+  settings.customYear = +e.target.value;
   save(STORE_SETTINGS, settings);
   renderGraph();
 });
@@ -1012,15 +1132,32 @@ function getRange() {
   if (f === 'today') {
     from = new Date(now);
   } else if (f === 'week') {
-    from = new Date(now); from.setDate(from.getDate() - 6);
-  } else if (f === 'year') {
-    from = new Date(now); from.setDate(from.getDate() - 364);
+    // This week: Sunday â†’ Saturday containing today
+    from = new Date(now);
+    from.setDate(from.getDate() - from.getDay()); // back to Sunday
+    to = new Date(from);
+    to.setDate(to.getDate() + 6);
+    to.setHours(23,59,59,999);
+  } else if (f === 'ytd') {
+    // Year-to-date: Jan 1 â†’ today
+    from = new Date(now.getFullYear(), 0, 1);
   } else if (f === 'custom') {
-    from = settings.customFrom ? new Date(settings.customFrom + 'T00:00:00') : new Date(now);
-    to   = settings.customTo   ? new Date(settings.customTo   + 'T23:59:59') : new Date(now);
-    if (from > to) [from, to] = [to, from];
-  } else { // month
-    from = new Date(now); from.setDate(from.getDate() - 29);
+    if (settings.customMode === 'month') {
+      const y = +settings.customYearM, m = +settings.customMonth;
+      from = new Date(y, m, 1);
+      to = new Date(y, m + 1, 0); to.setHours(23,59,59,999);
+    } else if (settings.customMode === 'year') {
+      const y = +settings.customYear;
+      from = new Date(y, 0, 1);
+      to = new Date(y, 11, 31); to.setHours(23,59,59,999);
+    } else {
+      from = settings.customFrom ? new Date(settings.customFrom + 'T00:00:00') : new Date(now);
+      to   = settings.customTo   ? new Date(settings.customTo   + 'T23:59:59') : new Date(now);
+      if (from > to) [from, to] = [to, from];
+    }
+  } else { // this month
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    to = new Date(now.getFullYear(), now.getMonth() + 1, 0); to.setHours(23,59,59,999);
   }
   return { from, to };
 }
@@ -1037,8 +1174,20 @@ function getScaledLimit() {
   const f = settings.filter;
   if (f === 'today')  return { limit: perDay,             windowDays: 1,   label: 'Daily limit' };
   if (f === 'week')   return { limit: perDay * 7,         windowDays: 7,   label: 'Weekly limit' };
-  if (f === 'year')   return { limit: monthly * 12,       windowDays: 365, label: 'Yearly limit' };
+  if (f === 'ytd') {
+    const { from, to } = getRange();
+    const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    return { limit: perDay * days, windowDays: days, label: 'YTD limit' };
+  }
   if (f === 'custom') {
+    if (settings.customMode === 'month') {
+      const y = +settings.customYearM, m = +settings.customMonth;
+      const days = new Date(y, m + 1, 0).getDate();
+      return { limit: monthly, windowDays: days, label: 'Monthly limit' };
+    }
+    if (settings.customMode === 'year') {
+      return { limit: monthly * 12, windowDays: 365, label: 'Yearly limit' };
+    }
     const { from, to } = getRange();
     const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
     return { limit: perDay * days, windowDays: days, label: 'Range limit' };
@@ -1050,7 +1199,14 @@ function rangeLabel() {
   const { from, to } = getRange();
   const f = settings.filter;
   if (f === 'today') return fmtDate(from);
-  return `${fmtDateShort(from)} – ${fmtDateShort(to)}`;
+  if (f === 'custom' && settings.customMode === 'month') {
+    return `${MONTH_NAMES[+settings.customMonth]} ${settings.customYearM}`;
+  }
+  if (f === 'custom' && settings.customMode === 'year') {
+    return String(settings.customYear);
+  }
+  if (f === 'ytd') return `Jan 1 â€“ ${fmtDateShort(to)} (YTD)`;
+  return `${fmtDateShort(from)} â€“ ${fmtDateShort(to)}`;
 }
 
 function filteredExpenses() {
@@ -1080,8 +1236,8 @@ function renderGraph() {
     const remaining = limit - total;
     const deltaEl = $('#spentDelta');
     deltaEl.textContent = over
-      ? `${fmtMoney(total - limit)} over limit · ${pct.toFixed(0)}%`
-      : `${fmtMoney(remaining)} remaining · ${pct.toFixed(0)}%`;
+      ? `${fmtMoney(total - limit)} over limit Â· ${pct.toFixed(0)}%`
+      : `${fmtMoney(remaining)} remaining Â· ${pct.toFixed(0)}%`;
     deltaEl.className = 'delta ' + (over ? 'over' : 'under');
     $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
   } else {
@@ -1464,15 +1620,14 @@ $('#importFile').addEventListener('change', async (e) => {
 const acctGrid = $('#acctGrid');
 function renderAccounts() {
   $('#acctSubtitle').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} tracked`;
-  acctGrid.innerHTML = '';
   if (accounts.length === 0) {
     acctGrid.innerHTML = `
-      <div class=”card” style=”padding: 38px 20px; text-align:center; color: var(--ink-3);”>
-        <div style=”font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;”>No accounts yet</div>
-        <div>Tap “Add account” to start tracking.</div>
+      <div class="card" style="padding: 38px 20px; text-align:center; color: var(--ink-3);">
+        <div style="font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;">No accounts yet</div>
+        <div>Tap â€œAdd accountâ€ to start tracking.</div>
       </div>`;
   } else {
-    accounts.forEach(a => {
+    acctGrid.innerHTML = accounts.map(a => {
       const series = a.series || [];
       const latest = series.at(-1);
       const first = series[0];
@@ -1482,36 +1637,27 @@ function renderAccounts() {
       const points = series.length;
       const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
       const deltaColor = delta >= 0 ? 'var(--good)' : 'var(--bad)';
-      const hidden = hiddenAccounts.has(a.id);
-
-      const card = document.createElement('div');
-      card.className = 'card acct-card';
-      card.innerHTML = `
-        <div class=”acct-mark” style=”background:${a.color};cursor:pointer;opacity:${hidden ? 0.35 : 1};transition:opacity .15s;” title=”${hidden ? 'Show on chart' : 'Hide from chart'}”>${initials}</div>
-        <div class=”acct-info”>
-          <div class=”name”>${escapeHtml(a.name)}</div>
-          <div class=”meta”>${points} data point${points === 1 ? '' : 's'}${latest ? ' · last ' + fmtDateShort(latest.date) : ''}</div>
-        </div>
-        <div class=”acct-value”>
-          <div class=”val”>${fmtMoney(value)}</div>
-          <div class=”delta” style=”color:${deltaColor}”>${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
-        </div>
-        <div class=”acct-actions”>
-          <button class=”btn” data-edit-acct=”${a.id}”>
-            <svg viewBox=”0 0 24 24” width=”13” height=”13” fill=”none” stroke=”currentColor” stroke-width=”2” stroke-linecap=”round” stroke-linejoin=”round”><path d=”M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7”/><path d=”M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z”/></svg>
-            Edit / import CSV
-          </button>
-          <button class=”btn btn-danger” data-del-acct=”${a.id}”>Delete</button>
+      return `
+        <div class="card acct-card">
+          <div class="acct-mark" style="background:${a.color}">${initials}</div>
+          <div class="acct-info">
+            <div class="name">${escapeHtml(a.name)}</div>
+            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' Â· last ' + fmtDateShort(latest.date) : ''}</div>
+          </div>
+          <div class="acct-value">
+            <div class="val">${fmtMoney(value)}</div>
+            <div class="delta" style="color:${deltaColor}">${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
+          </div>
+          <div class="acct-actions">
+            <button class="btn" data-edit-acct="${a.id}">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit / import CSV
+            </button>
+            <button class="btn btn-danger" data-del-acct="${a.id}">Delete</button>
+          </div>
         </div>
       `;
-
-      card.querySelector('.acct-mark').addEventListener('click', () => {
-        if (hiddenAccounts.has(a.id)) hiddenAccounts.delete(a.id); else hiddenAccounts.add(a.id);
-        renderAccounts();
-      });
-
-      acctGrid.appendChild(card);
-    });
+    }).join('');
   }
   drawAccountsChart();
   renderAcctLegend();
@@ -1615,9 +1761,9 @@ $('#acctCsvFile').addEventListener('change', async (e) => {
     }
     series.sort((a, b) => a.date.localeCompare(b.date));
     pendingSeries = series;
-    $('#acctCsvStatus').textContent = `✓ ${series.length} rows loaded · ${series.length ? fmtDateShort(series[0].date) + ' – ' + fmtDateShort(series.at(-1).date) : ''}`;
+    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' â€“ ' + fmtDateShort(series.at(-1).date) : ''}`;
   } catch (err) {
-    $('#acctCsvStatus').textContent = '✕ ' + err.message;
+    $('#acctCsvStatus').textContent = 'âœ• ' + err.message;
     pendingSeries = null;
   } finally {
     e.target.value = '';
@@ -1664,32 +1810,18 @@ function normalizeDate(s) {
 }
 
 /* ---------- accounts chart ---------- */
-let acctChartState = null;
-const hiddenAccounts = new Set();
-function interpolateVal(points, t) {
-  if (!points.length) return null;
-  const ts = points.map(p => new Date(p.date + 'T12:00:00').getTime());
-  if (t <= ts[0]) return points[0].value;
-  if (t >= ts[ts.length - 1]) return points[ts.length - 1].value;
-  for (let i = 0; i < ts.length - 1; i++) {
-    if (t >= ts[i] && t <= ts[i + 1]) {
-      const frac = (t - ts[i]) / (ts[i + 1] - ts[i]);
-      return points[i].value + frac * (points[i + 1].value - points[i].value);
-    }
-  }
-  return null;
-}
-
 function renderAcctLegend() {
   $('#acctLegend').innerHTML = accounts.map(a => `
-    <span style="display:inline-flex;align-items:center;gap:6px;">
-      <span style="width:10px;height:10px;border-radius:50%;background:${a.color};"></span>
-      <span style="color:var(--ink-2);">${escapeHtml(a.name)}</span>
+    <span style="display:inline-flex; align-items:center; gap:6px;">
+      <span style="width:10px; height:10px; border-radius:50%; background:${a.color};"></span>
+      <span style="color: var(--ink-2);">${escapeHtml(a.name)}</span>
     </span>
   `).join('');
 }
 
-function drawAccountsChart(hoverT = null) {
+let acctChartState = null;
+
+function drawAccountsChart() {
   const c = $('#acctChart');
   const css = getComputedStyle(document.documentElement);
   const ink3 = css.getPropertyValue('--ink-3').trim();
@@ -1709,18 +1841,17 @@ function drawAccountsChart(hoverT = null) {
   const W = wCss - pad.l - pad.r;
   const H = hCss - pad.t - pad.b;
 
-  const allSeries = accounts.filter(a => (a.series || []).length && !hiddenAccounts.has(a.id)).map(a => ({
-    name: a.name, color: a.color, points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
+  const allSeries = accounts.filter(a => (a.series || []).length).map(a => ({
+    id: a.id, name: a.name, color: a.color,
+    points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
   }));
 
   if (allSeries.length === 0) {
+    acctChartState = null;
     ctx.fillStyle = ink3;
     ctx.font = '13px ' + css.getPropertyValue('--sans');
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const msg = accounts.some(a => (a.series || []).length)
-      ? 'All accounts hidden — click a legend item to show'
-      : 'Add an account with a CSV to see its history here';
-    ctx.fillText(msg, pad.l + W / 2, pad.t + H / 2);
+    ctx.fillText('Add an account with a CSV to see its history here', pad.l + W / 2, pad.t + H / 2);
     return;
   }
 
@@ -1766,14 +1897,21 @@ function drawAccountsChart(hoverT = null) {
     ctx.fillText(fmtDateShort(new Date(t)), x, pad.t + H + 6);
   }
 
-  // Draw each series
+  // Pre-compute pixel coords for each series
   allSeries.forEach(s => {
-    ctx.beginPath();
-    s.points.forEach((p, i) => {
+    s.coords = s.points.map(p => {
       const t = new Date(p.date + 'T12:00:00').getTime();
       const x = pad.l + ((t - minT) / (maxT - minT)) * W;
       const y = pad.t + H - ((p.value - vMin) / (vMax - vMin)) * H;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      return { x, y, t, value: p.value, date: p.date };
+    });
+  });
+
+  // Draw each series
+  allSeries.forEach(s => {
+    ctx.beginPath();
+    s.coords.forEach((p, i) => {
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     });
     ctx.strokeStyle = s.color;
     ctx.lineWidth = 2.25;
@@ -1782,93 +1920,127 @@ function drawAccountsChart(hoverT = null) {
     ctx.stroke();
 
     // End dot
-    const last = s.points.at(-1);
-    const tx = new Date(last.date + 'T12:00:00').getTime();
-    const x = pad.l + ((tx - minT) / (maxT - minT)) * W;
-    const y = pad.t + H - ((last.value - vMin) / (vMax - vMin)) * H;
-    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    const last = s.coords.at(-1);
+    ctx.beginPath(); ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = s.color; ctx.fill();
   });
 
-  acctChartState = { minT, maxT, vMin, vMax, allSeries, pad, W, H, wCss, hCss };
-
-  if (hoverT !== null) {
-    const hx = pad.l + ((hoverT - minT) / (maxT - minT)) * W;
-    ctx.save();
-    ctx.beginPath();
-    ctx.strokeStyle = ink3;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.moveTo(hx, pad.t);
-    ctx.lineTo(hx, pad.t + H);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    const bgElev = css.getPropertyValue('--bg-elev').trim();
-    allSeries.forEach(s => {
-      const val = interpolateVal(s.points, hoverT);
-      if (val === null) return;
-      const hy = pad.t + H - ((val - vMin) / (vMax - vMin)) * H;
-      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = bgElev; ctx.fill();
-      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
-      ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.stroke();
-    });
-    ctx.restore();
-  }
+  acctChartState = { pad, W, H, wCss, hCss, minT, maxT, vMin, vMax, allSeries, ctx };
 }
 
 /* ---------- accounts chart hover ---------- */
-$('#acctChart').addEventListener('mousemove', e => {
-  if (!acctChartState) return;
-  const { minT, maxT, vMin, vMax, allSeries, pad, W, H } = acctChartState;
-  const rect = e.target.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const tooltip = $('#acctTooltip');
-
-  if (x < pad.l || x > pad.l + W || y < pad.t || y > pad.t + H) {
-    if (!tooltip.hidden) { tooltip.hidden = true; drawAccountsChart(); }
-    return;
+function interpolateAt(coords, t) {
+  if (!coords.length) return null;
+  if (t <= coords[0].t) return { value: coords[0].value, date: coords[0].date, x: coords[0].x, y: coords[0].y };
+  if (t >= coords.at(-1).t) {
+    const c = coords.at(-1);
+    return { value: c.value, date: c.date, x: c.x, y: c.y };
   }
+  for (let i = 1; i < coords.length; i++) {
+    if (coords[i].t >= t) {
+      const a = coords[i-1], b = coords[i];
+      const f = (t - a.t) / (b.t - a.t);
+      return {
+        value: a.value + (b.value - a.value) * f,
+        date: f < 0.5 ? a.date : b.date,
+        x: a.x + (b.x - a.x) * f,
+        y: a.y + (b.y - a.y) * f,
+      };
+    }
+  }
+  return null;
+}
 
-  const hoverT = Math.max(minT, Math.min(maxT, minT + ((x - pad.l) / W) * (maxT - minT)));
-  let total = 0;
-  const rows = allSeries.map(s => {
-    const val = interpolateVal(s.points, hoverT);
-    if (val !== null) total += val;
-    return `<div style="display:flex;gap:14px;justify-content:space-between;align-items:center;margin-top:3px;">
-      <span style="display:inline-flex;align-items:center;gap:5px;">
-        <span style="width:7px;height:7px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
-        ${escapeHtml(s.name)}
-      </span>
-      <span style="color:var(--ink);">${val !== null ? fmtMoney(val) : '—'}</span>
-    </div>`;
-  }).join('');
+function onAcctHover(e) {
+  if (!acctChartState) { hideAcctTooltip(); return; }
+  const { pad, W, H, minT, maxT, allSeries } = acctChartState;
+  const c = $('#acctChart');
+  const rect = c.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (c.clientWidth / rect.width);
+  if (mx < pad.l - 4 || mx > pad.l + W + 4) { hideAcctTooltip(); return; }
 
-  tooltip.innerHTML = `
-    <div style="color:var(--ink-3);margin-bottom:5px;">${fmtDate(new Date(hoverT))}</div>
-    ${rows}
-    ${allSeries.length > 1 ? `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;display:flex;gap:14px;justify-content:space-between;">
-      <span style="color:var(--ink-2);">Total</span>
-      <span style="color:var(--ink);">${fmtMoney(total)}</span>
-    </div>` : ''}
-  `;
+  const f = Math.max(0, Math.min(1, (mx - pad.l) / W));
+  const t = minT + f * (maxT - minT);
 
-  const cardRect = e.target.closest('.chart-card').getBoundingClientRect();
-  const hxRel = rect.left - cardRect.left + x;
-  const tipW = tooltip.offsetWidth || 180;
-  const tipLeft = hxRel + 16 + tipW < cardRect.width - 8 ? hxRel + 16 : hxRel - 16 - tipW;
-  tooltip.style.left = Math.max(4, tipLeft) + 'px';
-  tooltip.style.top = (rect.top - cardRect.top + pad.t) + 'px';
-  tooltip.hidden = false;
-
-  drawAccountsChart(hoverT);
-});
-
-$('#acctChart').addEventListener('mouseleave', () => {
-  $('#acctTooltip').hidden = true;
+  // Redraw chart, then overlay guide + dots
   drawAccountsChart();
-});
+  const ctx = $('#acctChart').getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const css = getComputedStyle(document.documentElement);
+  const ink3 = css.getPropertyValue('--ink-3').trim();
+
+  // Vertical guide
+  const guideX = pad.l + f * W;
+  ctx.save();
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = ink3;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(guideX, pad.t);
+  ctx.lineTo(guideX, pad.t + H);
+  ctx.stroke();
+  ctx.restore();
+
+  // Sample each series, draw dots
+  const samples = [];
+  allSeries.forEach(s => {
+    const pt = interpolateAt(s.coords, t);
+    if (!pt) return;
+    samples.push({ name: s.name, color: s.color, value: pt.value, date: pt.date, y: pt.y });
+    ctx.beginPath();
+    ctx.arc(guideX, pt.y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = s.color; ctx.fill();
+    ctx.beginPath();
+    ctx.arc(guideX, pt.y, 6.5, 0, Math.PI * 2);
+    ctx.strokeStyle = s.color; ctx.globalAlpha = 0.3; ctx.lineWidth = 2; ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+
+  // Tooltip content
+  const tt = $('#acctTooltip');
+  const dateStr = fmtDate(samples[0]?.date || new Date(t));
+  const rows = samples
+    .sort((a, b) => b.value - a.value)
+    .map(s => `
+      <div class="tt-row">
+        <span class="tt-swatch" style="background:${s.color}"></span>
+        <span class="tt-name">${escapeHtml(s.name)}</span>
+        <span class="tt-val">${fmtMoney(s.value)}</span>
+      </div>
+    `).join('');
+  tt.innerHTML = `<div class="tt-date">${dateStr}</div>${rows}`;
+
+  // Position tooltip (keep within wrap)
+  const wrap = $('#acctCanvasWrap');
+  const wrapW = wrap.clientWidth;
+  tt.classList.add('show');
+  const ttW = tt.offsetWidth;
+  const ttH = tt.offsetHeight;
+  let left = guideX;
+  // clamp so tooltip stays visible
+  left = Math.max(ttW / 2 + 4, Math.min(wrapW - ttW / 2 - 4, left));
+  let top = pad.t - 10;
+  // if too high, flip below
+  if (top - ttH < 0) {
+    top = pad.t + 10;
+    tt.style.transform = 'translate(-50%, 0)';
+  } else {
+    tt.style.transform = 'translate(-50%, -100%)';
+  }
+  tt.style.left = left + 'px';
+  tt.style.top = top + 'px';
+}
+
+function hideAcctTooltip() {
+  const tt = $('#acctTooltip');
+  if (tt) tt.classList.remove('show');
+  if (acctChartState) drawAccountsChart();
+}
+
+$('#acctChart').addEventListener('mousemove', onAcctHover);
+$('#acctChart').addEventListener('mouseleave', hideAcctTooltip);
 
 /* ============================================================
    TOAST
@@ -1906,6 +2078,4 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
-
-
 
