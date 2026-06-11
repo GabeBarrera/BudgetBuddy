@@ -379,6 +379,70 @@
     display: flex; align-items: center; gap: 10px;
   }
   .limit-controls .field-inline label { white-space: nowrap; }
+  #modifiersBtn { gap: 8px; }
+  #modifiersBtn .chev { transition: transform .2s; color: var(--ink-3); }
+  #modifiersBtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  #modifiersBtn .mod-summary {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+    margin-left: 2px;
+  }
+  #modifiersBtn .mod-summary.has { color: var(--bad); }
+
+  .modifiers-panel {
+    margin-top: 12px;
+    padding: 16px 18px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+  }
+  .modifiers-panel[hidden] { display: none; }
+  .mod-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 12px;
+  }
+  .mod-title { font-weight: 600; font-size: 14px; }
+  .mod-sub { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .mod-totals {
+    text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+    white-space: nowrap;
+  }
+  .mod-totals .net {
+    display: block; color: var(--ink); font-weight: 600; font-size: 14px;
+  }
+  .mod-list {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .mod-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 12px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+  }
+  .mod-row .mod-swatch {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--bad);
+  }
+  .mod-row .mod-name { font-weight: 500; }
+  .mod-row .mod-amt {
+    font-family: var(--mono); font-weight: 500; color: var(--bad);
+  }
+  .mod-row .mod-del {
+    background: none; border: none; cursor: pointer; padding: 4px;
+    color: var(--ink-3); display: grid; place-items: center; border-radius: 6px;
+  }
+  .mod-row .mod-del:hover { color: var(--bad); background: var(--bad-soft); }
+  .mod-empty {
+    padding: 16px 12px;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 13px;
+    background: var(--bg-sunken);
+    border: 1px dashed var(--line);
+    border-radius: 9px;
+  }
 
   .custom-range {
     display: flex; flex-direction: column; gap: 12px;
@@ -690,9 +754,27 @@
             <label for="monthlyLimit">Monthly limit ($)</label>
             <input type="number" id="monthlyLimit" class="input mono" min="0" step="50" style="max-width:180px;" />
           </div>
-          <div class="sub" style="color: var(--ink-3); font-family: var(--mono); font-size:12px;">
-            scales per filter
+          <button class="btn" id="modifiersBtn" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+            <span>Modifiers</span>
+            <span class="mod-summary" id="modSummary"></span>
+            <svg class="chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <div class="modifiers-panel" id="modifiersPanel" hidden>
+          <div class="mod-head">
+            <div>
+              <div class="mod-title">Monthly modifiers</div>
+              <div class="mod-sub" id="modSubLine">These reduce the monthly limit before it scales to the active filter.</div>
+            </div>
+            <div class="mod-totals" id="modTotals"></div>
           </div>
+          <div class="mod-list" id="modList"></div>
+          <button class="btn" id="addModBtn" style="margin-top: 6px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add new modifier
+          </button>
         </div>
       </div>
 
@@ -809,6 +891,33 @@
   </div>
 </div>
 
+<!-- ============== MODAL: add modifier ============== -->
+<div class="modal-backdrop" id="modModal">
+  <div class="modal">
+    <h3>Add monthly modifier</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="modType">Type</label>
+        <select id="modType" class="select"></select>
+      </div>
+      <div class="field" id="modCustomWrap" style="display:none;">
+        <label for="modCustom">Custom name</label>
+        <input type="text" id="modCustom" class="input" placeholder="e.g. 401(k) contribution" />
+      </div>
+      <div class="field">
+        <label for="modAmount">Monthly amount ($)</label>
+        <input type="number" id="modAmount" class="input mono" min="0.01" step="0.01" placeholder="0.00" />
+      </div>
+    </div>
+    <div class="actions">
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn btn-ghost" id="modCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="modSaveBtn">Add modifier</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============== MODAL: edit expense ============== -->
 <div class="modal-backdrop" id="expModal">
   <div class="modal">
@@ -909,8 +1018,9 @@ function save(key, value) {
 
 let expenses = load(STORE_EXP, null);
 let accounts = load(STORE_ACCT, null);
-let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customMode: 'range', customFrom: null, customTo: null, customMonth: null, customYearM: null, customYear: null, theme: 'light' };
+let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customMode: 'range', customFrom: null, customTo: null, customMonth: null, customYearM: null, customYear: null, theme: 'light', modifiers: [] };
 if (!settings.customMode) settings.customMode = 'range';
+if (!Array.isArray(settings.modifiers)) settings.modifiers = [];
 // Migrate old 'year' filter (which meant trailing-year) to 'ytd'
 if (settings.filter === 'year') settings.filter = 'ytd';
 
@@ -1121,8 +1231,104 @@ monthlyLimitEl.addEventListener('input', (e) => {
   if (Number.isFinite(n) && n >= 0) {
     settings.monthlyLimit = n;
     save(STORE_SETTINGS, settings);
+    renderModifiers();
     renderGraph();
   }
+});
+
+/* ---------- modifiers ---------- */
+const MODIFIER_PRESETS = ['Contributions', 'Savings', 'Insurance', 'Rent', 'Utilities', 'Subscriptions', 'Loan payment', 'Investments', 'Customâ€¦'];
+
+function renderModifiers() {
+  const mods = settings.modifiers || [];
+  const list = $('#modList');
+  if (mods.length === 0) {
+    list.innerHTML = `<div class="mod-empty">No modifiers yet. Add one to subtract a fixed monthly amount from your limit.</div>`;
+  } else {
+    list.innerHTML = mods.map(m => `
+      <div class="mod-row">
+        <span class="mod-swatch"></span>
+        <span class="mod-name">${escapeHtml(m.name)}</span>
+        <span class="mod-amt">âˆ’${fmtMoney(+m.amount).replace('$','$')}/mo</span>
+        <button class="mod-del" data-del-mod="${m.id}" title="Remove" aria-label="Remove modifier">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    `).join('');
+  }
+  const base = +settings.monthlyLimit || 0;
+  const modSum = mods.reduce((s, m) => s + (+m.amount || 0), 0);
+  const net = Math.max(0, base - modSum);
+  $('#modTotals').innerHTML = mods.length
+    ? `${fmtMoney(base)} âˆ’ ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
+    : '';
+  const summary = $('#modSummary');
+  if (modSum > 0) {
+    summary.textContent = `âˆ’${fmtMoney(modSum)}/mo`;
+    summary.classList.add('has');
+  } else {
+    summary.textContent = '';
+    summary.classList.remove('has');
+  }
+}
+
+$('#modifiersBtn').addEventListener('click', () => {
+  const panel = $('#modifiersPanel');
+  const open = !panel.hidden;
+  panel.hidden = open;
+  $('#modifiersBtn').setAttribute('aria-expanded', String(!open));
+});
+
+$('#modList').addEventListener('click', (e) => {
+  const del = e.target.closest('[data-del-mod]');
+  if (!del) return;
+  const m = settings.modifiers.find(x => x.id === del.dataset.delMod);
+  if (!m) return;
+  if (confirm(`Remove modifier "${m.name}" (âˆ’${fmtMoney(m.amount)}/mo)?`)) {
+    settings.modifiers = settings.modifiers.filter(x => x.id !== m.id);
+    save(STORE_SETTINGS, settings);
+    renderModifiers();
+    renderGraph();
+    toast('Modifier removed');
+  }
+});
+
+/* ---------- add modifier modal ---------- */
+function fillModTypeOptions() {
+  $('#modType').innerHTML = MODIFIER_PRESETS.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+}
+fillModTypeOptions();
+$('#modType').addEventListener('change', (e) => {
+  $('#modCustomWrap').style.display = e.target.value === 'Customâ€¦' ? 'flex' : 'none';
+  if (e.target.value === 'Customâ€¦') setTimeout(() => $('#modCustom').focus(), 30);
+});
+
+$('#addModBtn').addEventListener('click', () => {
+  $('#modType').value = MODIFIER_PRESETS[0];
+  $('#modCustom').value = '';
+  $('#modCustomWrap').style.display = 'none';
+  $('#modAmount').value = '';
+  $('#modModal').classList.add('open');
+  setTimeout(() => $('#modAmount').focus(), 50);
+});
+$('#modCancelBtn').addEventListener('click', () => $('#modModal').classList.remove('open'));
+$('#modModal').addEventListener('click', (e) => { if (e.target === $('#modModal')) $('#modModal').classList.remove('open'); });
+$('#modSaveBtn').addEventListener('click', () => {
+  const type = $('#modType').value;
+  const name = type === 'Customâ€¦' ? $('#modCustom').value.trim() : type;
+  const amount = +$('#modAmount').value;
+  if (!name) { alert('Please enter a name for the modifier.'); return; }
+  if (!(amount > 0)) { alert('Please enter an amount greater than 0.'); return; }
+  settings.modifiers = settings.modifiers || [];
+  settings.modifiers.push({ id: uid(), name, amount });
+  save(STORE_SETTINGS, settings);
+  $('#modModal').classList.remove('open');
+  // Keep the panel open so the user sees their new modifier
+  $('#modifiersPanel').hidden = false;
+  $('#modifiersBtn').setAttribute('aria-expanded', 'true');
+  renderModifiers();
+  renderGraph();
+  toast('Modifier added');
 });
 
 function getRange() {
@@ -1168,7 +1374,9 @@ function daysInCurrentMonth() {
 }
 
 function getScaledLimit() {
-  const monthly = +settings.monthlyLimit || 0;
+  const baseMonthly = +settings.monthlyLimit || 0;
+  const modSum = (settings.modifiers || []).reduce((s, m) => s + (+m.amount || 0), 0);
+  const monthly = Math.max(0, baseMonthly - modSum);
   const dim = daysInCurrentMonth();
   const perDay = monthly / dim;
   const f = settings.filter;
@@ -1239,7 +1447,13 @@ function renderGraph() {
       ? `${fmtMoney(total - limit)} over limit Â· ${pct.toFixed(0)}%`
       : `${fmtMoney(remaining)} remaining Â· ${pct.toFixed(0)}%`;
     deltaEl.className = 'delta ' + (over ? 'over' : 'under');
-    $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+    const modSum = (settings.modifiers || []).reduce((s, m) => s + (+m.amount || 0), 0);
+    const modCount = (settings.modifiers || []).length;
+    if (modCount > 0) {
+      $('#limitMeta').textContent = `after ${modCount} modifier${modCount === 1 ? '' : 's'} Â· âˆ’${fmtMoney(modSum)}/mo`;
+    } else {
+      $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+    }
   } else {
     $('#spentDelta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
     $('#spentDelta').className = 'delta';
@@ -2060,6 +2274,7 @@ function toast(msg) {
 function redrawAll() {
   renderTable();
   renderAccounts();
+  renderModifiers();
   renderGraph();
 }
 
