@@ -406,7 +406,7 @@
     font-family: var(--mono); font-size: 12px; color: var(--ink-3);
     margin-left: 2px;
   }
-  #modifiersBtn .mod-summary.has { color: var(--bad); }
+  #modifiersBtn .mod-summary.has { color: var(--ink-3); }
 
   .modifiers-panel {
     margin-top: 12px;
@@ -472,6 +472,7 @@
   .custom-pane {
     display: flex; gap: 10px; align-items: flex-end;
   }
+  .custom-pane .field { min-width: 0; flex: 1; }
 
   /* ---------- table ---------- */
   .toolbar {
@@ -887,6 +888,12 @@
           </button>
         </div>
 
+        <div class="net-worth-block total-block" id="netWorthBlock" hidden style="margin-bottom: 18px;">
+          <div class="label">Total net worth</div>
+          <div class="value mono" id="netWorthValue">$0.00</div>
+          <div class="delta" id="netWorthDelta"></div>
+        </div>
+
         <div class="acct-grid" id="acctGrid"></div>
 
         <div class="chart-card card" style="margin-top: 6px;">
@@ -918,7 +925,7 @@
         </div>
 
         <div class="custom-range hidden" id="customRange">
-          <div class="filters" id="customMode" style="margin-bottom: 4px;">
+          <div class="filters" id="customMode" style="margin-bottom: 4px; margin-left: auto;">
             <button class="pill active" data-mode="range">Date range</button>
             <button class="pill" data-mode="month">Single month</button>
             <button class="pill" data-mode="year">Single year</button>
@@ -978,7 +985,7 @@
 
         <div class="limit-controls">
           <div class="field-inline" style="flex:1;">
-            <label for="monthlyLimit">Monthly limit ($)</label>
+            <label for="monthlyLimit">Monthly income ($)</label>
             <input type="number" id="monthlyLimit" class="input mono" min="0" step="50" style="max-width:180px;" />
           </div>
           <button class="btn" id="modifiersBtn" aria-expanded="false">
@@ -1639,8 +1646,10 @@ function renderModifiers() {
     ? `${fmtMoney(base)} \u2212 ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
     : '';
   const summary = $('#modSummary');
-  if (modSum > 0) {
-    summary.textContent = `\u2212${fmtMoney(modSum)}/mo`;
+  // Per request, do not show the dollar amount on the button â€” keep a subtle
+  // count so the user knows modifiers are active.
+  if (mods.length > 0) {
+    summary.textContent = `(${mods.length})`;
     summary.classList.add('has');
   } else {
     summary.textContent = '';
@@ -1826,7 +1835,7 @@ function renderGraph() {
     const modSum = (settings.modifiers || []).reduce((s, m) => s + (+m.amount || 0), 0);
     const modCount = (settings.modifiers || []).length;
     if (modCount > 0) {
-      $('#limitMeta').textContent = `after ${modCount} modifier${modCount === 1 ? '' : 's'} \u00B7 \u2212${fmtMoney(modSum)}/mo`;
+      $('#limitMeta').innerHTML = `after ${modCount} modifier${modCount === 1 ? '' : 's'} \u00B7 <span style="color: var(--bad)">\u2212${escapeHtml(fmtMoney(modSum))}/mo</span>`;
     } else {
       $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
     }
@@ -2274,6 +2283,33 @@ function pickFile(accept) {
 const acctGrid = $('#acctGrid');
 function renderAccounts() {
   $('#acctSubtitle').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} tracked`;
+
+  // Total net worth = sum of each account's latest data point.
+  // Also compute the change since the earliest combined snapshot for a delta.
+  const netNow = accounts.reduce((s, a) => {
+    const last = (a.series || []).at(-1);
+    return s + (last ? +last.value || 0 : 0);
+  }, 0);
+  const accountsWithData = accounts.filter(a => (a.series || []).length > 0);
+  const netBlock = $('#netWorthBlock');
+  if (accountsWithData.length === 0) {
+    netBlock.hidden = true;
+  } else {
+    netBlock.hidden = false;
+    $('#netWorthValue').textContent = fmtMoney(netNow);
+    // Earliest combined snapshot: pick each account's first datapoint and sum.
+    const netStart = accountsWithData.reduce((s, a) => s + (+a.series[0].value || 0), 0);
+    const netDelta = netNow - netStart;
+    const netPct = netStart ? (netDelta / netStart) * 100 : 0;
+    const deltaEl = $('#netWorthDelta');
+    if (Math.abs(netDelta) < 0.005) {
+      deltaEl.textContent = '\u2014';
+      deltaEl.className = 'delta';
+    } else {
+      deltaEl.textContent = `${fmtMoney(netDelta, true)} (${netPct.toFixed(1)}%) since start`;
+      deltaEl.className = 'delta ' + (netDelta >= 0 ? 'under' : 'over');
+    }
+  }
   if (accounts.length === 0) {
     acctGrid.innerHTML = `
       <div class="card" style="padding: 38px 20px; text-align:center; color: var(--ink-3);">
@@ -2465,12 +2501,22 @@ function normalizeDate(s) {
 
 /* ---------- accounts chart ---------- */
 function renderAcctLegend() {
-  $('#acctLegend').innerHTML = accounts.map(a => `
+  const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#111';
+  const items = accounts.map(a => `
     <span style="display:inline-flex; align-items:center; gap:6px;">
       <span style="width:10px; height:10px; border-radius:50%; background:${a.color};"></span>
       <span style="color: var(--ink-2);">${escapeHtml(a.name)}</span>
     </span>
-  `).join('');
+  `);
+  if (accounts.some(a => (a.series || []).length)) {
+    items.unshift(`
+      <span style="display:inline-flex; align-items:center; gap:6px;">
+        <span style="width:14px; height:2px; background:${ink}; border-radius:1px; box-shadow: 4px 0 0 ${ink}, -4px 0 0 ${ink};"></span>
+        <span style="color: var(--ink); font-weight: 600;">Total net worth</span>
+      </span>
+    `);
+  }
+  $('#acctLegend').innerHTML = items.join('');
 }
 
 let acctChartState = null;
@@ -2499,6 +2545,35 @@ function drawAccountsChart() {
     id: a.id, name: a.name, color: a.color,
     points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
   }));
+
+  // Synthesize a Total net worth series: at every unique date across accounts,
+  // sum each account's latest value on or before that date. Accounts with no
+  // datapoint yet contribute 0 (treated as not yet existing).
+  if (allSeries.length > 0) {
+    const dateSet = new Set();
+    allSeries.forEach(s => s.points.forEach(p => dateSet.add(p.date)));
+    const sortedDates = [...dateSet].sort();
+    const netPoints = sortedDates.map(date => {
+      let sum = 0;
+      allSeries.forEach(s => {
+        // points are sorted ascending by date â€” grab the latest â‰¤ date
+        let latest = null;
+        for (const p of s.points) {
+          if (p.date <= date) latest = p; else break;
+        }
+        if (latest) sum += +latest.value || 0;
+      });
+      return { date, value: sum };
+    });
+    const netColor = css.getPropertyValue('--ink').trim() || '#111';
+    allSeries.push({
+      id: '__net__',
+      name: 'Total net worth',
+      color: netColor,
+      points: netPoints,
+      isNet: true,
+    });
+  }
 
   if (allSeries.length === 0) {
     acctChartState = null;
@@ -2561,21 +2636,23 @@ function drawAccountsChart() {
     });
   });
 
-  // Draw each series
+  // Draw each series. The net-worth series renders thicker and last so it sits on top.
   allSeries.forEach(s => {
     ctx.beginPath();
     s.coords.forEach((p, i) => {
       if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     });
     ctx.strokeStyle = s.color;
-    ctx.lineWidth = 2.25;
+    ctx.lineWidth = s.isNet ? 3 : 2.25;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    if (s.isNet) ctx.setLineDash([6, 4]); else ctx.setLineDash([]);
     ctx.stroke();
+    ctx.setLineDash([]);
 
     // End dot
     const last = s.coords.at(-1);
-    ctx.beginPath(); ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(last.x, last.y, s.isNet ? 4 : 3.5, 0, Math.PI * 2);
     ctx.fillStyle = s.color; ctx.fill();
   });
 
