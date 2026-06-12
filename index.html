@@ -797,8 +797,8 @@
   </header>
 
   <section class="pager" id="pager">
-    <span class="kbd-hint left">â† accounts</span>
-    <span class="kbd-hint right">expenses â†’</span>
+    <span class="kbd-hint left">&larr; accounts</span>
+    <span class="kbd-hint right">expenses &rarr;</span>
     <div class="pager-track" id="track">
 
       <!-- ====================== ACCOUNTS ====================== -->
@@ -1085,21 +1085,21 @@
                   <span class="sr-title">Recover Backup</span>
                   <span class="sr-desc">Restore from <span class="mono">budgetbuddy.json</span></span>
                 </span>
-                <span class="sr-arrow">â†’</span>
+                <span class="sr-arrow">&rarr;</span>
               </button>
               <button class="settings-row" data-import="expenses">
                 <span>
                   <span class="sr-title">Expense Log</span>
                   <span class="sr-desc">From <span class="mono">budgetbuddy_expenses.json</span> or <span class="mono">.csv</span></span>
                 </span>
-                <span class="sr-arrow">â†’</span>
+                <span class="sr-arrow">&rarr;</span>
               </button>
               <button class="settings-row" data-import="accounts">
                 <span>
                   <span class="sr-title">Accounts</span>
                   <span class="sr-desc">From <span class="mono">budgetbuddy_accounts.json</span> or <span class="mono">.csv</span></span>
                 </span>
-                <span class="sr-arrow">â†’</span>
+                <span class="sr-arrow">&rarr;</span>
               </button>
             </div>
           </div>
@@ -1121,8 +1121,8 @@
                   <span class="sr-desc" id="expCount"></span>
                 </div>
                 <div class="es-buttons">
-                  <button class="btn" data-export="expenses-json">JSON â†’ <span class="mono">budgetbuddy_expenses.json</span></button>
-                  <button class="btn" data-export="expenses-csv">CSV â†’ <span class="mono">budgetbuddy_expenses.csv</span></button>
+                  <button class="btn" data-export="expenses-json">JSON &rarr; <span class="mono">budgetbuddy_expenses.json</span></button>
+                  <button class="btn" data-export="expenses-csv">CSV &rarr; <span class="mono">budgetbuddy_expenses.csv</span></button>
                 </div>
               </div>
               <div class="export-section">
@@ -1131,8 +1131,8 @@
                   <span class="sr-desc" id="acctCount"></span>
                 </div>
                 <div class="es-buttons">
-                  <button class="btn" data-export="accounts-json">JSON â†’ <span class="mono">budgetbuddy_accounts.json</span></button>
-                  <button class="btn" data-export="accounts-csv">CSV â†’ <span class="mono">budgetbuddy_accounts.csv</span></button>
+                  <button class="btn" data-export="accounts-json">JSON &rarr; <span class="mono">budgetbuddy_accounts.json</span></button>
+                  <button class="btn" data-export="accounts-csv">CSV &rarr; <span class="mono">budgetbuddy_accounts.csv</span></button>
                 </div>
               </div>
             </div>
@@ -1279,7 +1279,7 @@ const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const fmtMoney = (n, signed = false) => {
-  const sign = signed && n > 0 ? '+' : (n < 0 ? 'âˆ’' : '');
+  const sign = signed && n > 0 ? '+' : (n < 0 ? '\u2212' : '');
   const abs = Math.abs(n);
   return sign + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
@@ -1546,7 +1546,7 @@ function renderModifiers() {
       <div class="mod-row">
         <span class="mod-swatch"></span>
         <span class="mod-name">${escapeHtml(m.name)}</span>
-        <span class="mod-amt">âˆ’${fmtMoney(+m.amount).replace('$','$')}/mo</span>
+        <span class="mod-amt">\u2212${fmtMoney(+m.amount).replace('$','$')}/mo</span>
         <button class="mod-del" data-del-mod="${m.id}" title="Remove" aria-label="Remove modifier">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -1557,11 +1557,11 @@ function renderModifiers() {
   const modSum = mods.reduce((s, m) => s + (+m.amount || 0), 0);
   const net = Math.max(0, base - modSum);
   $('#modTotals').innerHTML = mods.length
-    ? `${fmtMoney(base)} âˆ’ ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
+    ? `${fmtMoney(base)} \u2212 ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
     : '';
   const summary = $('#modSummary');
   if (modSum > 0) {
-    summary.textContent = `âˆ’${fmtMoney(modSum)}/mo`;
+    summary.textContent = `\u2212${fmtMoney(modSum)}/mo`;
     summary.classList.add('has');
   } else {
     summary.textContent = '';
@@ -1581,7 +1581,7 @@ $('#modList').addEventListener('click', (e) => {
   if (!del) return;
   const m = settings.modifiers.find(x => x.id === del.dataset.delMod);
   if (!m) return;
-  if (confirm(`Remove modifier "${m.name}" (âˆ’${fmtMoney(m.amount)}/mo)?`)) {
+  if (confirm(`Remove modifier "${m.name}" (\u2212${fmtMoney(m.amount)}/mo)?`)) {
     settings.modifiers = settings.modifiers.filter(x => x.id !== m.id);
     save(STORE_SETTINGS, settings);
     renderModifiers();
@@ -1635,14 +1635,14 @@ function getRange() {
   if (f === 'today') {
     from = new Date(now);
   } else if (f === 'week') {
-    // This week: Sunday â†’ Saturday containing today
+    // This week: Sunday \u2192 Saturday containing today
     from = new Date(now);
     from.setDate(from.getDate() - from.getDay()); // back to Sunday
     to = new Date(from);
     to.setDate(to.getDate() + 6);
     to.setHours(23,59,59,999);
   } else if (f === 'ytd') {
-    // Year-to-date: Jan 1 â†’ today
+    // Year-to-date: Jan 1 \u2192 today
     from = new Date(now.getFullYear(), 0, 1);
   } else if (f === 'custom') {
     if (settings.customMode === 'month') {
@@ -1741,13 +1741,13 @@ function renderGraph() {
     const remaining = limit - total;
     const deltaEl = $('#spentDelta');
     deltaEl.textContent = over
-      ? `${fmtMoney(total - limit)} over limit Â· ${pct.toFixed(0)}%`
-      : `${fmtMoney(remaining)} remaining Â· ${pct.toFixed(0)}%`;
+      ? `${fmtMoney(total - limit)} over limit \u00B7 ${pct.toFixed(0)}%`
+      : `${fmtMoney(remaining)} remaining \u00B7 ${pct.toFixed(0)}%`;
     deltaEl.className = 'delta ' + (over ? 'over' : 'under');
     const modSum = (settings.modifiers || []).reduce((s, m) => s + (+m.amount || 0), 0);
     const modCount = (settings.modifiers || []).length;
     if (modCount > 0) {
-      $('#limitMeta').textContent = `after ${modCount} modifier${modCount === 1 ? '' : 's'} Â· âˆ’${fmtMoney(modSum)}/mo`;
+      $('#limitMeta').textContent = `after ${modCount} modifier${modCount === 1 ? '' : 's'} \u00B7 \u2212${fmtMoney(modSum)}/mo`;
     } else {
       $('#limitMeta').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
     }
@@ -2199,7 +2199,7 @@ function renderAccounts() {
     acctGrid.innerHTML = `
       <div class="card" style="padding: 38px 20px; text-align:center; color: var(--ink-3);">
         <div style="font-size:15px; color: var(--ink); font-weight: 500; margin-bottom: 4px;">No accounts yet</div>
-        <div>Tap â€œAdd accountâ€ to start tracking.</div>
+        <div>Tap \u201CAdd account\u201D to start tracking.</div>
       </div>`;
   } else {
     acctGrid.innerHTML = accounts.map(a => {
@@ -2217,7 +2217,7 @@ function renderAccounts() {
           <div class="acct-mark" style="background:${a.color}">${initials}</div>
           <div class="acct-info">
             <div class="name">${escapeHtml(a.name)}</div>
-            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' Â· last ' + fmtDateShort(latest.date) : ''}</div>
+            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' \u00B7 last ' + fmtDateShort(latest.date) : ''}</div>
           </div>
           <div class="acct-value">
             <div class="val">${fmtMoney(value)}</div>
@@ -2336,9 +2336,9 @@ $('#acctCsvFile').addEventListener('change', async (e) => {
     }
     series.sort((a, b) => a.date.localeCompare(b.date));
     pendingSeries = series;
-    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' \u2013 ' + fmtDateShort(series.at(-1).date) : ''}`;
+    $('#acctCsvStatus').textContent = `\u2713 ${series.length} rows loaded \u00B7 ${series.length ? fmtDateShort(series[0].date) + ' \u2013 ' + fmtDateShort(series.at(-1).date) : ''}`;
   } catch (err) {
-    $('#acctCsvStatus').textContent = 'âœ• ' + err.message;
+    $('#acctCsvStatus').textContent = '\u2715 ' + err.message;
     pendingSeries = null;
   } finally {
     e.target.value = '';
@@ -2805,5 +2805,4 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
-
 
