@@ -460,12 +460,13 @@
   }
   .add-form {
     display: grid;
-    grid-template-columns: 1fr 1.2fr 1.4fr 1fr auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
     gap: 10px;
     padding: 14px;
     margin-bottom: 18px;
     align-items: end;
   }
+  .add-form .field { min-width: 0; }
   .add-form .btn-primary { height: 38px; }
 
   .table-card {
@@ -476,10 +477,11 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
+    table-layout: fixed;
   }
   thead th {
     text-align: left;
-    padding: 12px 16px;
+    padding: 12px clamp(8px, 2vw, 16px);
     font-weight: 500;
     font-size: 11px;
     text-transform: uppercase;
@@ -489,15 +491,33 @@
     background: var(--bg-sunken);
   }
   tbody td {
-    padding: 12px 16px;
+    padding: 12px clamp(8px, 2vw, 16px);
     border-bottom: 1px solid var(--line);
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+  thead th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* 4 equal data columns share whatever the actions column doesn't take */
+  .table-card th:nth-child(1), .table-card td:nth-child(1),
+  .table-card th:nth-child(2), .table-card td:nth-child(2),
+  .table-card th:nth-child(3), .table-card td:nth-child(3),
+  .table-card th:nth-child(4), .table-card td:nth-child(4) {
+    width: calc((100% - 80px) / 4);
+  }
+  .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 80px; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: var(--bg-sunken); }
+  th.th-amount { text-align: right; }
   td.amount { font-family: var(--mono); font-weight: 500; text-align: right; }
-  td.actions { text-align: right; white-space: nowrap; }
-  td.actions button { margin-left: 4px; }
+  td.actions { text-align: right; white-space: nowrap; padding-left: 4px; padding-right: 8px; }
+  td.actions button { margin-left: 2px; }
+  td.actions .btn-ghost { padding: 5px 7px; }
   .cat-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 9px;
@@ -505,7 +525,12 @@
     font-size: 12px;
     background: var(--bg-sunken);
     border: 1px solid var(--line);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+  .cat-chip .swatch { flex-shrink: 0; }
   .cat-chip .swatch {
     width: 8px; height: 8px; border-radius: 50%;
   }
@@ -769,13 +794,41 @@
   }
 
   @media (max-width: 640px) {
-    .add-form { grid-template-columns: 1fr 1fr; }
+    .add-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .add-form .btn-primary { grid-column: 1 / -1; }
     .totals { gap: 18px; }
     .total-block .value { font-size: 26px; }
     .page { padding: 4px 14px 24px; }
     .topbar { padding: 12px 14px 8px; }
     .dots { gap: 32px; }
+    /* Tighter expense table on phones */
+    .table-card table { font-size: 12px; }
+    .table-card thead th { padding: 10px 8px; font-size: 10px; letter-spacing: 0.03em; }
+    .table-card tbody td { padding: 10px 8px; }
+    .table-card th:nth-child(1), .table-card td:nth-child(1),
+    .table-card th:nth-child(2), .table-card td:nth-child(2),
+    .table-card th:nth-child(3), .table-card td:nth-child(3),
+    .table-card th:nth-child(4), .table-card td:nth-child(4) {
+      width: calc((100% - 56px) / 4);
+    }
+    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 56px; }
+    .table-card .cat-chip { padding: 2px 6px; font-size: 11px; gap: 4px; }
+    .table-card td.actions { padding-left: 2px; padding-right: 6px; }
+    .table-card td.actions .btn-ghost { padding: 4px 5px; }
+    .table-card td.actions button { margin-left: 1px; }
+  }
+  @media (max-width: 400px) {
+    .table-card thead th { font-size: 9px; padding: 8px 5px; }
+    .table-card tbody td { padding: 8px 5px; font-size: 11px; }
+    .table-card th:nth-child(1), .table-card td:nth-child(1),
+    .table-card th:nth-child(2), .table-card td:nth-child(2),
+    .table-card th:nth-child(3), .table-card td:nth-child(3),
+    .table-card th:nth-child(4), .table-card td:nth-child(4) {
+      width: calc((100% - 44px) / 4);
+    }
+    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 44px; }
+    .table-card td.actions .btn-ghost svg { width: 12px; height: 12px; }
+    .table-card td.actions .btn-ghost { padding: 4px 3px; }
   }
 </style>
 </head>
@@ -968,11 +1021,11 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 130px;">Date</th>
-                <th style="width: 160px;">Category</th>
+                <th>Date</th>
+                <th>Category</th>
                 <th>Vendor</th>
-                <th style="text-align: right; width: 120px;">Amount</th>
-                <th style="width: 90px;"></th>
+                <th class="th-amount">Amount</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -2716,7 +2769,17 @@ async function importBackup(text) {
     throw new Error('Not a BudgetBuddy backup');
   }
   if (!confirm('Restore from backup? This will replace ALL current data (expenses, accounts, settings).')) return;
-  if (Array.isArray(data.expenses)) expenses = importExpensesJson(JSON.stringify(data.expenses));
+  if (Array.isArray(data.expenses)) {
+    // Inline clean (importExpensesJson throws on empty; a backup with no expenses is valid)
+    const labelToId = Object.fromEntries(CATEGORIES.map(c => [c.label.toLowerCase(), c.id]));
+    expenses = data.expenses
+      .filter(d => d && d.date && d.category && Number.isFinite(+d.amount))
+      .map(d => {
+        const catKey = String(d.category).toLowerCase();
+        const category = CATEGORIES.find(c => c.id === d.category) ? d.category : (labelToId[catKey] || 'other');
+        return { id: d.id || uid(), date: d.date, category, vendor: d.vendor || '', amount: +d.amount };
+      });
+  }
   if (Array.isArray(data.accounts)) accounts = importAccountsJson(JSON.stringify(data.accounts));
   if (data.settings && typeof data.settings === 'object') {
     settings = Object.assign({}, settings, data.settings);
@@ -2805,5 +2868,4 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
-
 
