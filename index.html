@@ -117,6 +117,7 @@
     position: relative;
     overflow: hidden;
     touch-action: pan-y;
+    overscroll-behavior-x: contain;
   }
   .pager-track {
     display: flex;
@@ -237,6 +238,25 @@
     outline: none;
     transition: border-color .15s, box-shadow .15s;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* iOS renders type=date with a fixed intrinsic width that won't shrink and
+     overflows its grid track into the next field. Strip the native appearance
+     so the box obeys width:100% / min-width:0 like any other input. */
+  input[type="date"].input {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="date"].input::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
+  input[type="date"].input::-webkit-calendar-picker-indicator {
+    margin-left: 2px;
+    padding: 0;
+    flex-shrink: 0;
   }
   .input:focus, .select:focus {
     border-color: var(--ink-2);
@@ -809,9 +829,9 @@
     .table-card th:nth-child(2), .table-card td:nth-child(2),
     .table-card th:nth-child(3), .table-card td:nth-child(3),
     .table-card th:nth-child(4), .table-card td:nth-child(4) {
-      width: calc((100% - 56px) / 4);
+      width: calc((100% - 72px) / 4);
     }
-    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 56px; }
+    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 72px; }
     .table-card .cat-chip { padding: 2px 6px; font-size: 11px; gap: 4px; }
     .table-card td.actions { padding-left: 2px; padding-right: 6px; }
     .table-card td.actions .btn-ghost { padding: 4px 5px; }
@@ -824,9 +844,9 @@
     .table-card th:nth-child(2), .table-card td:nth-child(2),
     .table-card th:nth-child(3), .table-card td:nth-child(3),
     .table-card th:nth-child(4), .table-card td:nth-child(4) {
-      width: calc((100% - 44px) / 4);
+      width: calc((100% - 60px) / 4);
     }
-    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 44px; }
+    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 60px; }
     .table-card td.actions .btn-ghost svg { width: 12px; height: 12px; }
     .table-card td.actions .btn-ghost { padding: 4px 3px; }
   }
@@ -1413,7 +1433,7 @@ function gotoPage(idx, animate = true) {
 // Pointer drag (mouse + touch)
 pager.addEventListener('pointerdown', (e) => {
   if (e.target.closest('button, input, select, textarea, a, .modal-backdrop')) return;
-  drag = { x: e.clientX, y: e.clientY, startX: e.clientX, decided: false, horizontal: false, w: pager.clientWidth };
+  drag = { x: e.clientX, y: e.clientY, startX: e.clientX, lastDx: 0, decided: false, horizontal: false, w: pager.clientWidth };
   pager.setPointerCapture(e.pointerId);
 });
 pager.addEventListener('pointermove', (e) => {
@@ -1429,6 +1449,7 @@ pager.addEventListener('pointermove', (e) => {
   }
   if (drag.horizontal) {
     e.preventDefault();
+    drag.lastDx = dx;
     const pct = (dx / drag.w) * 33.3333;
     const base = -currentPage * 33.3333;
     track.style.transform = `translate3d(${base + pct}%, 0, 0)`;
@@ -1437,8 +1458,13 @@ pager.addEventListener('pointermove', (e) => {
 function endDrag(e) {
   if (!drag) return;
   if (drag.horizontal) {
-    const dx = e.clientX - drag.startX;
-    const threshold = drag.w * 0.18;
+    // On iOS the system back-swipe (drag rightward from the left edge) can
+    // hijack the gesture and fire pointercancel early, leaving e.clientX stale.
+    // Fall back to the last delta we tracked so the page still flips.
+    const liveDx = e.clientX - drag.startX;
+    const dx = Math.abs(liveDx) >= Math.abs(drag.lastDx) ? liveDx : drag.lastDx;
+    // Forgiving threshold: ~12% of width, capped so a short flick still counts.
+    const threshold = Math.min(drag.w * 0.12, 56);
     let next = currentPage;
     if (dx < -threshold) next = Math.min(2, currentPage + 1);
     else if (dx > threshold) next = Math.max(0, currentPage - 1);
