@@ -460,7 +460,7 @@
   }
   .add-form {
     display: grid;
-    grid-template-columns: 1.2fr 1.4fr 1fr auto;
+    grid-template-columns: 1fr 1.2fr 1.4fr 1fr auto;
     gap: 10px;
     padding: 14px;
     margin-bottom: 18px;
@@ -568,7 +568,9 @@
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--shadow-md);
-    width: 100%; max-width: 460px;
+    width: 100%; max-width: 480px;
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
     padding: 22px;
   }
   .modal h3 {
@@ -583,6 +585,154 @@
   .modal .actions {
     display: flex; justify-content: space-between; gap: 8px;
   }
+
+  .settings-grid {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .settings-group {
+    display: flex; flex-direction: column;
+  }
+  .settings-tile {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--bg);
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .05s;
+    width: 100%;
+  }
+  .settings-tile:hover { border-color: var(--line-strong); background: var(--bg-sunken); }
+  .settings-tile:active { transform: translateY(1px); }
+  .settings-tile .st-icon {
+    width: 38px; height: 38px; border-radius: 9px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .settings-tile .st-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .settings-tile .st-title { font-weight: 600; font-size: 14px; color: var(--ink); }
+  .settings-tile .st-desc  { color: var(--ink-3); font-size: 12px; }
+  .settings-tile .st-desc .mono { font-family: var(--mono); }
+  .settings-tile .st-chev {
+    color: var(--ink-3); flex-shrink: 0;
+    transition: transform .2s;
+  }
+  .settings-tile[aria-expanded="true"] .st-chev { transform: rotate(180deg); }
+  .settings-tile[aria-expanded="true"] {
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+    background: var(--bg-sunken);
+  }
+
+  .settings-drop {
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 11px 11px;
+    background: var(--bg-sunken);
+    display: flex; flex-direction: column; gap: 8px;
+    animation: drop-in .18s ease-out;
+  }
+  .settings-drop[hidden] { display: none; }
+  .settings-drop.nested {
+    background: var(--bg);
+    border-radius: 0 0 9px 9px;
+  }
+  @keyframes drop-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .settings-sub { display: flex; flex-direction: column; }
+  .settings-sub-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--bg);
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    width: 100%;
+  }
+  .settings-sub-head:hover { border-color: var(--line-strong); background: var(--bg-sunken); }
+  .settings-sub-head[aria-expanded="true"] {
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+    background: var(--bg-sunken);
+  }
+  .settings-sub-head[aria-expanded="true"] .st-chev { transform: rotate(180deg); }
+  .settings-sub-head .st-icon-sm {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .settings-sub-head .sr-title { font-weight: 600; font-size: 13px; }
+  .settings-sub-head .sr-desc { color: var(--ink-3); font-size: 12px; flex: 1; }
+  .settings-sub-head .st-chev { color: var(--ink-3); transition: transform .2s; }
+
+  .settings-note {
+    margin: 0 4px 4px;
+    color: var(--ink-3); font-size: 12px;
+  }
+
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--bg-elev);
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    width: 100%;
+  }
+  .settings-row:hover { background: var(--bg-sunken); border-color: var(--line-strong); }
+  .settings-row .sr-title { display: block; font-weight: 600; font-size: 13px; }
+  .settings-row .sr-desc  { display: block; color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .settings-row .sr-desc .mono { font-family: var(--mono); }
+  .settings-row .sr-arrow { color: var(--ink-3); font-size: 16px; flex-shrink: 0; }
+
+  .export-section {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--bg-elev);
+  }
+  .export-section .es-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .export-section .sr-title { font-weight: 600; font-size: 13px; }
+  .export-section .sr-desc { color: var(--ink-3); font-size: 12px; }
+  .export-section .es-buttons {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .export-section .es-buttons .btn { justify-content: flex-start; font-size: 12.5px; }
+  .export-section .es-buttons .mono { font-family: var(--mono); }
+
+  .purge-warn {
+    padding: 12px 14px;
+    border: 1px solid var(--bad);
+    background: var(--bad-soft);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .purge-warn ul { margin: 6px 0 0; padding-left: 18px; }
+  .purge-warn li { margin: 2px 0; }
+  .purge-ack {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    background: var(--bg-elev);
+  }
+  .purge-ack input { width: 16px; height: 16px; cursor: pointer; }
 
   /* ---------- toast ---------- */
   .toast {
@@ -625,6 +775,7 @@
     .total-block .value { font-size: 26px; }
     .page { padding: 4px 14px 24px; }
     .topbar { padding: 12px 14px 8px; }
+    .dots { gap: 32px; }
   }
 </style>
 </head>
@@ -636,6 +787,9 @@
       <span>BudgetBuddy</span>
     </div>
     <div class="top-actions">
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button id="themeBtn" class="icon-btn" title="Toggle theme">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
@@ -652,7 +806,7 @@
         <div class="page-head">
           <div>
             <h1>Accounts</h1>
-            <div class="sub" id="acctSubtitle">â€” accounts tracked</div>
+            <div class="sub" id="acctSubtitle">&mdash; accounts tracked</div>
           </div>
           <button class="btn btn-primary" id="addAcctBtn">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -729,12 +883,12 @@
             <div class="total-block" id="spentBlock">
               <div class="label">Spent</div>
               <div class="value" id="spentValue">$0.00</div>
-              <div class="delta" id="spentDelta">â€”</div>
+              <div class="delta" id="spentDelta">&mdash;</div>
             </div>
             <div class="total-block">
               <div class="label" id="limitLabel">Limit</div>
               <div class="value mono" id="limitValue">$0.00</div>
-              <div class="delta" id="limitMeta">â€”</div>
+              <div class="delta" id="limitMeta">&mdash;</div>
             </div>
           </div>
         </div>
@@ -783,22 +937,7 @@
         <div class="page-head">
           <div>
             <h1>Expense log</h1>
-            <div class="sub" id="tableSubtitle">â€” entries</div>
-          </div>
-          <div class="toolbar" style="margin-bottom:0;">
-            <button class="btn" id="exportBtn">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Export JSON
-            </button>
-            <button class="btn" id="exportCsvBtn">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Export CSV
-            </button>
-            <button class="btn" id="importBtn">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-              Import JSON
-            </button>
-            <input type="file" id="importFile" accept=".json,application/json" hidden />
+            <div class="sub" id="tableSubtitle">&mdash; entries</div>
           </div>
         </div>
 
@@ -810,6 +949,10 @@
           <div class="field">
             <label for="newCategory">Category</label>
             <select id="newCategory" class="select"></select>
+          </div>
+          <div class="field">
+            <label for="newVendor">Vendor</label>
+            <input type="text" id="newVendor" class="input" placeholder="e.g. Whole Foods" />
           </div>
           <div class="field">
             <label for="newAmount">Amount ($)</label>
@@ -826,9 +969,10 @@
             <thead>
               <tr>
                 <th style="width: 130px;">Date</th>
-                <th>Category</th>
-                <th style="text-align: right;">Amount</th>
-                <th style="width: 120px;"></th>
+                <th style="width: 160px;">Category</th>
+                <th>Vendor</th>
+                <th style="text-align: right; width: 120px;">Amount</th>
+                <th style="width: 90px;"></th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -872,7 +1016,7 @@
         <label>Import CSV (optional)</label>
         <button type="button" class="btn" id="acctCsvBtn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-          Choose CSV fileâ€¦
+          Choose CSV file&hellip;
         </button>
         <input type="file" id="acctCsvFile" accept=".csv,text/csv" hidden />
         <div id="acctCsvStatus" style="font-size:12px; color: var(--ink-3); font-family: var(--mono);"></div>
@@ -887,6 +1031,155 @@
         <button class="btn btn-ghost" id="acctCancelBtn">Cancel</button>
         <button class="btn btn-primary" id="acctSaveBtn">Save</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: settings ============== -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <p style="color: var(--ink-3); font-size:12.5px; margin: -10px 0 16px;">Manage your data &mdash; backup, transfer, or wipe BudgetBuddy.</p>
+
+    <div class="settings-grid">
+
+      <!-- BACKUP (direct action) -->
+      <button class="settings-tile" id="backupTile">
+        <span class="st-icon" style="background: var(--good-soft); color: var(--good);">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+        </span>
+        <span class="st-text">
+          <span class="st-title">Backup</span>
+          <span class="st-desc">Save everything to <span class="mono">budgetbuddy.json</span></span>
+        </span>
+      </button>
+
+      <!-- IMPORT / EXPORT (accordion) -->
+      <div class="settings-group" data-group="ie">
+        <button class="settings-tile" data-toggle="ie" aria-expanded="false">
+          <span class="st-icon" style="background: oklch(0.55 0.14 250 / 0.10); color: oklch(0.55 0.14 250);">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </span>
+          <span class="st-text">
+            <span class="st-title">Import / Export</span>
+            <span class="st-desc">Transfer expense logs and accounts</span>
+          </span>
+          <svg class="st-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="settings-drop" data-drop="ie" hidden>
+
+          <!-- Sub: Import -->
+          <div class="settings-sub" data-sub-group="import">
+            <button class="settings-sub-head" data-toggle="import" aria-expanded="false">
+              <span class="st-icon-sm" style="background: oklch(0.55 0.14 250 / 0.10); color: oklch(0.55 0.14 250);">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              </span>
+              <span class="sr-title">Import</span>
+              <span class="sr-desc">Load data from a file</span>
+              <svg class="st-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="settings-drop nested" data-drop="import" hidden>
+              <p class="settings-note">Imports replace all existing data of that type.</p>
+              <button class="settings-row" data-import="backup">
+                <span>
+                  <span class="sr-title">Recover Backup</span>
+                  <span class="sr-desc">Restore from <span class="mono">budgetbuddy.json</span></span>
+                </span>
+                <span class="sr-arrow">â†’</span>
+              </button>
+              <button class="settings-row" data-import="expenses">
+                <span>
+                  <span class="sr-title">Expense Log</span>
+                  <span class="sr-desc">From <span class="mono">budgetbuddy_expenses.json</span> or <span class="mono">.csv</span></span>
+                </span>
+                <span class="sr-arrow">â†’</span>
+              </button>
+              <button class="settings-row" data-import="accounts">
+                <span>
+                  <span class="sr-title">Accounts</span>
+                  <span class="sr-desc">From <span class="mono">budgetbuddy_accounts.json</span> or <span class="mono">.csv</span></span>
+                </span>
+                <span class="sr-arrow">â†’</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub: Export -->
+          <div class="settings-sub" data-sub-group="export">
+            <button class="settings-sub-head" data-toggle="export" aria-expanded="false">
+              <span class="st-icon-sm" style="background: var(--good-soft); color: var(--good);">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              </span>
+              <span class="sr-title">Export</span>
+              <span class="sr-desc">Save data to a file</span>
+              <svg class="st-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="settings-drop nested" data-drop="export" hidden>
+              <div class="export-section">
+                <div class="es-head">
+                  <span class="sr-title">Expense Log</span>
+                  <span class="sr-desc" id="expCount"></span>
+                </div>
+                <div class="es-buttons">
+                  <button class="btn" data-export="expenses-json">JSON â†’ <span class="mono">budgetbuddy_expenses.json</span></button>
+                  <button class="btn" data-export="expenses-csv">CSV â†’ <span class="mono">budgetbuddy_expenses.csv</span></button>
+                </div>
+              </div>
+              <div class="export-section">
+                <div class="es-head">
+                  <span class="sr-title">Accounts</span>
+                  <span class="sr-desc" id="acctCount"></span>
+                </div>
+                <div class="es-buttons">
+                  <button class="btn" data-export="accounts-json">JSON â†’ <span class="mono">budgetbuddy_accounts.json</span></button>
+                  <button class="btn" data-export="accounts-csv">CSV â†’ <span class="mono">budgetbuddy_accounts.csv</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PURGE (accordion) -->
+      <div class="settings-group" data-group="purge">
+        <button class="settings-tile" data-toggle="purge" aria-expanded="false">
+          <span class="st-icon" style="background: var(--bad-soft); color: var(--bad);">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+          </span>
+          <span class="st-text">
+            <span class="st-title">Purge</span>
+            <span class="st-desc">Delete all data permanently</span>
+          </span>
+          <svg class="st-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="settings-drop" data-drop="purge" hidden>
+          <div class="purge-warn">
+            <div class="pw-row">
+              <strong>This permanently deletes:</strong>
+              <ul>
+                <li>All expense log entries</li>
+                <li>All accounts and their history</li>
+                <li>Monthly limit, modifiers, and filters</li>
+                <li>Theme preference</li>
+              </ul>
+            </div>
+            <div class="pw-row" style="margin-top:10px;">
+              BudgetBuddy will reload empty. There is no undo. We strongly recommend taking a Backup first.
+            </div>
+          </div>
+          <label class="purge-ack">
+            <input type="checkbox" id="purgeAck" />
+            <span>I understand this cannot be undone</span>
+          </label>
+          <button class="btn btn-danger" id="purgeConfirmBtn" disabled style="width: 100%; justify-content: center;">Purge everything</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" data-close-settings>Close</button>
     </div>
   </div>
 </div>
@@ -930,6 +1223,10 @@
       <div class="field">
         <label for="editCategory">Category</label>
         <select id="editCategory" class="select"></select>
+      </div>
+      <div class="field">
+        <label for="editVendor">Vendor</label>
+        <input type="text" id="editVendor" class="input" placeholder="e.g. Whole Foods" />
       </div>
       <div class="field">
         <label for="editAmount">Amount ($)</label>
@@ -1237,7 +1534,7 @@ monthlyLimitEl.addEventListener('input', (e) => {
 });
 
 /* ---------- modifiers ---------- */
-const MODIFIER_PRESETS = ['Contributions', 'Savings', 'Insurance', 'Rent', 'Utilities', 'Subscriptions', 'Loan payment', 'Investments', 'Customâ€¦'];
+const MODIFIER_PRESETS = ['Contributions', 'Savings', 'Insurance', 'Rent', 'Utilities', 'Subscriptions', 'Loan payment', 'Investments', 'Custom\u2026'];
 
 function renderModifiers() {
   const mods = settings.modifiers || [];
@@ -1299,8 +1596,8 @@ function fillModTypeOptions() {
 }
 fillModTypeOptions();
 $('#modType').addEventListener('change', (e) => {
-  $('#modCustomWrap').style.display = e.target.value === 'Customâ€¦' ? 'flex' : 'none';
-  if (e.target.value === 'Customâ€¦') setTimeout(() => $('#modCustom').focus(), 30);
+  $('#modCustomWrap').style.display = e.target.value === 'Custom\u2026' ? 'flex' : 'none';
+  if (e.target.value === 'Custom\u2026') setTimeout(() => $('#modCustom').focus(), 30);
 });
 
 $('#addModBtn').addEventListener('click', () => {
@@ -1315,7 +1612,7 @@ $('#modCancelBtn').addEventListener('click', () => $('#modModal').classList.remo
 $('#modModal').addEventListener('click', (e) => { if (e.target === $('#modModal')) $('#modModal').classList.remove('open'); });
 $('#modSaveBtn').addEventListener('click', () => {
   const type = $('#modType').value;
-  const name = type === 'Customâ€¦' ? $('#modCustom').value.trim() : type;
+  const name = type === 'Custom\u2026' ? $('#modCustom').value.trim() : type;
   const amount = +$('#modAmount').value;
   if (!name) { alert('Please enter a name for the modifier.'); return; }
   if (!(amount > 0)) { alert('Please enter an amount greater than 0.'); return; }
@@ -1413,8 +1710,8 @@ function rangeLabel() {
   if (f === 'custom' && settings.customMode === 'year') {
     return String(settings.customYear);
   }
-  if (f === 'ytd') return `Jan 1 â€“ ${fmtDateShort(to)} (YTD)`;
-  return `${fmtDateShort(from)} â€“ ${fmtDateShort(to)}`;
+  if (f === 'ytd') return `Jan 1 \u2013 ${fmtDateShort(to)} (YTD)`;
+  return `${fmtDateShort(from)} \u2013 ${fmtDateShort(to)}`;
 }
 
 function filteredExpenses() {
@@ -1689,10 +1986,12 @@ function renderTable() {
   $('#tableEmpty').style.display = expenses.length === 0 ? 'block' : 'none';
   tbody.innerHTML = sorted.map(x => {
     const cat = CATEGORIES.find(c => c.id === x.category) || CATEGORIES.at(-1);
+    const vendor = x.vendor ? escapeHtml(x.vendor) : '<span style="color: var(--ink-3);">&mdash;</span>';
     return `
       <tr>
         <td class="mono" style="font-family: var(--mono); color: var(--ink-2);">${fmtDate(x.date)}</td>
         <td><span class="cat-chip"><span class="swatch" style="background:${cat.color}"></span>${cat.label}</span></td>
+        <td>${vendor}</td>
         <td class="amount">${fmtMoney(x.amount)}</td>
         <td class="actions">
           <button class="btn btn-ghost" data-edit="${x.id}" title="Edit">
@@ -1726,11 +2025,13 @@ $('#addForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const date = $('#newDate').value;
   const category = $('#newCategory').value;
+  const vendor = $('#newVendor').value.trim();
   const amount = +$('#newAmount').value;
   if (!date || !category || !(amount > 0)) return;
-  expenses.push({ id: uid(), date, category, amount });
+  expenses.push({ id: uid(), date, category, vendor, amount });
   save(STORE_EXP, expenses);
   $('#newAmount').value = '';
+  $('#newVendor').value = '';
   redrawAll();
   toast('Expense added');
 });
@@ -1742,6 +2043,7 @@ function openEditExpense(id) {
   editingId = id;
   $('#editDate').value = x.date;
   $('#editCategory').value = x.category;
+  $('#editVendor').value = x.vendor || '';
   $('#editAmount').value = x.amount;
   $('#expModal').classList.add('open');
 }
@@ -1752,6 +2054,7 @@ $('#expSaveBtn').addEventListener('click', () => {
   if (!x) return;
   x.date = $('#editDate').value;
   x.category = $('#editCategory').value;
+  x.vendor = $('#editVendor').value.trim();
   x.amount = +$('#editAmount').value;
   save(STORE_EXP, expenses);
   $('#expModal').classList.remove('open');
@@ -1761,72 +2064,130 @@ $('#expSaveBtn').addEventListener('click', () => {
 });
 $('#expModal').addEventListener('click', (e) => { if (e.target === $('#expModal')) { $('#expModal').classList.remove('open'); editingId = null; } });
 
-/* ---------- export / import JSON ---------- */
-$('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: 'application/json' });
+/* ---------- export / import helpers ---------- */
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'budget_expenses.json';
+  a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-  toast('Exported budget_expenses.json');
-});
-
-$('#exportCsvBtn').addEventListener('click', () => {
-  const esc = (v) => {
-    const s = String(v ?? '');
-    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  };
+}
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function expensesToJson() { return JSON.stringify(expenses, null, 2); }
+function expensesToCsv() {
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
-  const rows = [['Date', 'Category', 'Amount']];
+  const rows = [['Date', 'Category', 'Vendor', 'Amount']];
   sorted.forEach(x => {
     const cat = CATEGORIES.find(c => c.id === x.category);
-    rows.push([x.date, cat ? cat.label : x.category, (+x.amount).toFixed(2)]);
+    rows.push([x.date, cat ? cat.label : x.category, x.vendor || '', (+x.amount).toFixed(2)]);
   });
-  const csv = rows.map(r => r.map(esc).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'budget_expenses.csv';
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-  toast('Exported budget_expenses.csv');
-});
-$('#importBtn').addEventListener('click', () => $('#importFile').click());
-$('#importFile').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!Array.isArray(data)) throw new Error('Expected an array');
-    const clean = data
-      .filter(d => d && d.date && d.category && Number.isFinite(+d.amount))
-      .map(d => ({
-        id: d.id || uid(),
-        date: d.date,
-        category: d.category,
-        amount: +d.amount,
-      }));
-    if (!clean.length) throw new Error('No valid entries');
-    const choice = confirm(`Import ${clean.length} entries.\n\nOK = merge with existing.\nCancel = replace all.`);
-    if (choice) {
-      // merge by id
-      const byId = new Map(expenses.map(x => [x.id, x]));
-      clean.forEach(x => byId.set(x.id, x));
-      expenses = [...byId.values()];
-    } else {
-      expenses = clean;
-    }
-    save(STORE_EXP, expenses);
-    redrawAll();
-    toast(`Imported ${clean.length} entries`);
-  } catch (err) {
-    alert('Import failed: ' + err.message);
-  } finally {
-    e.target.value = '';
+  return rows.map(r => r.map(csvEscape).join(',')).join('\n');
+}
+function accountsToJson() { return JSON.stringify(accounts, null, 2); }
+function accountsToCsv() {
+  const rows = [['Account', 'Date', 'Total Value']];
+  accounts.forEach(a => {
+    (a.series || []).forEach(p => rows.push([a.name, p.date, (+p.value).toFixed(2)]));
+  });
+  return rows.map(r => r.map(csvEscape).join(',')).join('\n');
+}
+
+function importExpensesJson(text) {
+  const data = JSON.parse(text);
+  if (!Array.isArray(data)) throw new Error('Expected an array of expenses');
+  const labelToId = Object.fromEntries(CATEGORIES.map(c => [c.label.toLowerCase(), c.id]));
+  const clean = data
+    .filter(d => d && d.date && d.category && Number.isFinite(+d.amount))
+    .map(d => {
+      const catKey = String(d.category).toLowerCase();
+      const category = CATEGORIES.find(c => c.id === d.category) ? d.category : (labelToId[catKey] || 'other');
+      return { id: d.id || uid(), date: d.date, category, vendor: d.vendor || '', amount: +d.amount };
+    });
+  if (!clean.length) throw new Error('No valid entries in file');
+  return clean;
+}
+function importExpensesCsv(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) throw new Error('Empty CSV');
+  const headers = rows[0].map(h => String(h).trim().toLowerCase());
+  const di = headers.indexOf('date');
+  const ci = headers.indexOf('category');
+  const vi = headers.indexOf('vendor');
+  const ai = headers.findIndex(h => h === 'amount' || h === 'amount ($)' || h === 'amount($)');
+  if (di < 0 || ci < 0 || ai < 0) throw new Error('CSV needs Date, Category and Amount columns');
+  const labelToId = Object.fromEntries(CATEGORIES.map(c => [c.label.toLowerCase(), c.id]));
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[di] || !r[ci] || !r[ai]) continue;
+    const date = normalizeDate(r[di]);
+    const catKey = String(r[ci]).trim().toLowerCase();
+    const category = CATEGORIES.find(c => c.id === catKey) ? catKey : (labelToId[catKey] || 'other');
+    const amount = +String(r[ai]).replace(/[$,\s]/g, '');
+    if (!date || !Number.isFinite(amount)) continue;
+    out.push({ id: uid(), date, category, vendor: vi >= 0 ? String(r[vi] || '').trim() : '', amount });
   }
-});
+  if (!out.length) throw new Error('No valid rows');
+  return out;
+}
+function importAccountsJson(text) {
+  const data = JSON.parse(text);
+  if (!Array.isArray(data)) throw new Error('Expected an array of accounts');
+  return data
+    .filter(a => a && a.name)
+    .map((a, i) => ({
+      id: a.id || uid(),
+      name: String(a.name),
+      color: a.color || ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+      series: (Array.isArray(a.series) ? a.series : [])
+        .filter(p => p && p.date && Number.isFinite(+p.value))
+        .map(p => ({ date: normalizeDate(p.date) || p.date, value: +p.value }))
+        .sort((a,b) => a.date.localeCompare(b.date)),
+    }));
+}
+function importAccountsCsv(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) throw new Error('Empty CSV');
+  const headers = rows[0].map(h => String(h).trim().toLowerCase());
+  const ni = headers.indexOf('account');
+  const di = headers.indexOf('date');
+  const vi = headers.findIndex(h => h === 'total value' || h === 'total_value' || h === 'value');
+  if (ni < 0 || di < 0 || vi < 0) throw new Error('CSV needs Account, Date, Total Value columns');
+  const byName = new Map();
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[ni] || !r[di] || !r[vi]) continue;
+    const name = String(r[ni]).trim();
+    const date = normalizeDate(r[di]);
+    const value = +String(r[vi]).replace(/[$,\s]/g, '');
+    if (!name || !date || !Number.isFinite(value)) continue;
+    if (!byName.has(name)) byName.set(name, []);
+    byName.get(name).push({ date, value });
+  }
+  let i = 0;
+  return [...byName.entries()].map(([name, series]) => ({
+    id: uid(), name,
+    color: ACCOUNT_COLORS[i++ % ACCOUNT_COLORS.length],
+    series: series.sort((a,b) => a.date.localeCompare(b.date)),
+  }));
+}
+
+/* ---------- file picker helper ---------- */
+function pickFile(accept) {
+  return new Promise((resolve) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept;
+    inp.addEventListener('change', () => {
+      const f = inp.files && inp.files[0];
+      resolve(f || null);
+    });
+    inp.click();
+  });
+}
 
 /* ============================================================
    ACCOUNTS VIEW
@@ -1975,7 +2336,7 @@ $('#acctCsvFile').addEventListener('change', async (e) => {
     }
     series.sort((a, b) => a.date.localeCompare(b.date));
     pendingSeries = series;
-    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' â€“ ' + fmtDateShort(series.at(-1).date) : ''}`;
+    $('#acctCsvStatus').textContent = `âœ“ ${series.length} rows loaded Â· ${series.length ? fmtDateShort(series[0].date) + ' \u2013 ' + fmtDateShort(series.at(-1).date) : ''}`;
   } catch (err) {
     $('#acctCsvStatus').textContent = 'âœ• ' + err.message;
     pendingSeries = null;
@@ -2255,6 +2616,157 @@ function hideAcctTooltip() {
 
 $('#acctChart').addEventListener('mousemove', onAcctHover);
 $('#acctChart').addEventListener('mouseleave', hideAcctTooltip);
+
+/* ============================================================
+   SETTINGS MODAL (accordion)
+   ============================================================ */
+function openSettings() {
+  // Collapse all accordion sections each time settings opens
+  $$('[data-toggle]', $('#settingsModal')).forEach(btn => {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  $$('[data-drop]', $('#settingsModal')).forEach(d => { d.hidden = true; });
+  $('#purgeAck').checked = false;
+  $('#purgeConfirmBtn').disabled = true;
+  $('#expCount').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
+  $('#acctCount').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'}`;
+  $('#settingsModal').classList.add('open');
+}
+function closeSettings() { $('#settingsModal').classList.remove('open'); }
+
+$('#settingsBtn').addEventListener('click', openSettings);
+$('#settingsModal').addEventListener('click', (e) => {
+  if (e.target === $('#settingsModal')) { closeSettings(); return; }
+  if (e.target.closest('[data-close-settings]')) { closeSettings(); return; }
+  const toggle = e.target.closest('[data-toggle]');
+  if (toggle) {
+    const key = toggle.dataset.toggle;
+    const drop = $('#settingsModal').querySelector(`[data-drop="${key}"]`);
+    const open = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!open));
+    if (drop) drop.hidden = open;
+    if (!open) {
+      // refresh dynamic export counts when opening export
+      if (key === 'export') {
+        $('#expCount').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
+        $('#acctCount').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'}`;
+      }
+      if (key === 'purge') {
+        $('#purgeAck').checked = false;
+        $('#purgeConfirmBtn').disabled = true;
+      }
+    }
+  }
+});
+
+/* ---------- backup ---------- */
+$('#backupTile').addEventListener('click', () => doBackup());
+function doBackup() {
+  const payload = {
+    app: 'BudgetBuddy',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    expenses,
+    accounts,
+    settings,
+  };
+  downloadFile('budgetbuddy.json', JSON.stringify(payload, null, 2), 'application/json');
+  toast('Backed up to budgetbuddy.json');
+}
+
+/* ---------- imports ---------- */
+$$('[data-import]', $('#settingsModal')).forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const kind = btn.dataset.import;
+    const accept = (kind === 'backup') ? '.json,application/json' : '.json,.csv,application/json,text/csv';
+    const file = await pickFile(accept);
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const isCsv = /\.csv$/i.test(file.name) || file.type.includes('csv');
+      if (kind === 'backup') {
+        if (isCsv) throw new Error('Backup must be a .json file');
+        await importBackup(text);
+      } else if (kind === 'expenses') {
+        const newList = isCsv ? importExpensesCsv(text) : importExpensesJson(text);
+        if (!confirm(`Replace your entire expense log with ${newList.length} imported entries? This cannot be undone.`)) return;
+        expenses = newList;
+        save(STORE_EXP, expenses);
+        toast(`Imported ${newList.length} entries`);
+      } else if (kind === 'accounts') {
+        const newList = isCsv ? importAccountsCsv(text) : importAccountsJson(text);
+        if (!confirm(`Replace all accounts with ${newList.length} imported account(s)? This cannot be undone.`)) return;
+        accounts = newList;
+        save(STORE_ACCT, accounts);
+        toast(`Imported ${newList.length} account(s)`);
+      }
+      redrawAll();
+      closeSettings();
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  });
+});
+
+async function importBackup(text) {
+  const data = JSON.parse(text);
+  if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
+  if (!Array.isArray(data.expenses) && !Array.isArray(data.accounts) && !data.settings) {
+    throw new Error('Not a BudgetBuddy backup');
+  }
+  if (!confirm('Restore from backup? This will replace ALL current data (expenses, accounts, settings).')) return;
+  if (Array.isArray(data.expenses)) expenses = importExpensesJson(JSON.stringify(data.expenses));
+  if (Array.isArray(data.accounts)) accounts = importAccountsJson(JSON.stringify(data.accounts));
+  if (data.settings && typeof data.settings === 'object') {
+    settings = Object.assign({}, settings, data.settings);
+    if (!Array.isArray(settings.modifiers)) settings.modifiers = [];
+  }
+  save(STORE_EXP, expenses);
+  save(STORE_ACCT, accounts);
+  save(STORE_SETTINGS, settings);
+  // Reapply UI state
+  monthlyLimitEl.value = settings.monthlyLimit;
+  $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
+  customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
+  if (settings.filter === 'custom') initCustomDefaults();
+  applyTheme();
+  toast('Backup restored');
+}
+
+/* ---------- exports ---------- */
+$$('[data-export]', $('#settingsModal')).forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const kind = btn.dataset.export;
+    if (kind === 'expenses-json') downloadFile('budgetbuddy_expenses.json', expensesToJson(), 'application/json');
+    if (kind === 'expenses-csv')  downloadFile('budgetbuddy_expenses.csv',  expensesToCsv(),  'text/csv;charset=utf-8');
+    if (kind === 'accounts-json') downloadFile('budgetbuddy_accounts.json', accountsToJson(), 'application/json');
+    if (kind === 'accounts-csv')  downloadFile('budgetbuddy_accounts.csv',  accountsToCsv(),  'text/csv;charset=utf-8');
+    toast('Downloaded ' + ({
+      'expenses-json':'budgetbuddy_expenses.json',
+      'expenses-csv':'budgetbuddy_expenses.csv',
+      'accounts-json':'budgetbuddy_accounts.json',
+      'accounts-csv':'budgetbuddy_accounts.csv',
+    })[kind]);
+  });
+});
+
+/* ---------- purge ---------- */
+$('#purgeAck').addEventListener('change', (e) => {
+  $('#purgeConfirmBtn').disabled = !e.target.checked;
+});
+$('#purgeAck').addEventListener('click', (e) => e.stopPropagation());
+$('#purgeConfirmBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!confirm('Final confirmation: PERMANENTLY delete all BudgetBuddy data?')) return;
+  localStorage.removeItem(STORE_EXP);
+  localStorage.removeItem(STORE_ACCT);
+  localStorage.removeItem(STORE_SETTINGS);
+  closeSettings();
+  toast('All data purged \u2014 reloading\u2026');
+  setTimeout(() => location.reload(), 600);
+});
 
 /* ============================================================
    TOAST
