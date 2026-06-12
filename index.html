@@ -859,6 +859,13 @@
     .swipe-action { padding: 0 16px; font-size: 12px; gap: 6px; }
     .f-full, .lbl-full { display: none; }
     .f-short, .lbl-short { display: inline; }
+    /* Mobile: hide the modifier count, and flag the button red when active */
+    #modSummary { display: none; }
+    #modifiersBtn.has-mods {
+      color: var(--bad);
+      border-color: var(--bad);
+    }
+    #modifiersBtn.has-mods .chev { color: var(--bad); }
   }
   @media (max-width: 400px) {
     .exp-head { font-size: 9px; padding: 8px 6px; gap: 6px; }
@@ -934,7 +941,7 @@
             <button class="pill" data-filter="week"><span class="f-full">This week</span><span class="f-short">W</span></button>
             <button class="pill active" data-filter="month"><span class="f-full">This month</span><span class="f-short">M</span></button>
             <button class="pill" data-filter="ytd">YTD</button>
-            <button class="pill" data-filter="custom">Custom</button>
+            <button class="pill" data-filter="custom"><span class="f-full">Custom</span><span class="f-short">More</span></button>
           </div>
         </div>
 
@@ -1680,6 +1687,7 @@ function renderModifiers() {
   const summary = $('#modSummary');
   // Per request, do not show the dollar amount on the button — keep a subtle
   // count so the user knows modifiers are active.
+  $('#modifiersBtn').classList.toggle('has-mods', mods.length > 0);
   if (mods.length > 0) {
     summary.textContent = `(${mods.length})`;
     summary.classList.add('has');
