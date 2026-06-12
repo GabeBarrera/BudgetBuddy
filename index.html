@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -494,51 +494,84 @@
     padding: 0;
     overflow: hidden;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    table-layout: fixed;
-  }
-  thead th {
-    text-align: left;
+  /* Expense list \u2014 grid rows (was a table) so each entry can be swiped */
+  .exp-head, .exp-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    gap: 12px;
     padding: 12px clamp(8px, 2vw, 16px);
-    font-weight: 500;
+  }
+  .exp-head {
     font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--ink-3);
-    border-bottom: 1px solid var(--line);
     background: var(--bg-sunken);
-  }
-  tbody td {
-    padding: 12px clamp(8px, 2vw, 16px);
     border-bottom: 1px solid var(--line);
-    vertical-align: middle;
+  }
+  .exp-head .ta-right { text-align: right; justify-self: end; }
+  .exp-row {
+    font-size: 13px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--line);
+  }
+  .exp-list .swipe-wrap:last-child .exp-row { border-bottom: none; }
+  .exp-row > span {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  thead th {
+  .ec-date { font-family: var(--mono); color: var(--ink-2); font-size: 13px; }
+  .ec-amt { font-family: var(--mono); font-weight: 500; text-align: right; justify-self: end; }
+  @media (hover: hover) {
+    .exp-row:hover { background: var(--bg-sunken); }
+  }
+
+  /* ---------- swipe-to-act (edit right / delete left) ---------- */
+  .swipe-wrap {
+    position: relative;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    touch-action: pan-y;
   }
-  /* 4 equal data columns share whatever the actions column doesn't take */
-  .table-card th:nth-child(1), .table-card td:nth-child(1),
-  .table-card th:nth-child(2), .table-card td:nth-child(2),
-  .table-card th:nth-child(3), .table-card td:nth-child(3),
-  .table-card th:nth-child(4), .table-card td:nth-child(4) {
-    width: calc((100% - 80px) / 4);
+  .swipe-actions {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    z-index: 0;
   }
-  .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 80px; }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: var(--bg-sunken); }
-  th.th-amount { text-align: right; }
-  td.amount { font-family: var(--mono); font-weight: 500; text-align: right; }
-  td.actions { text-align: right; white-space: nowrap; padding-left: 4px; padding-right: 8px; }
-  td.actions button { margin-left: 2px; }
-  td.actions .btn-ghost { padding: 5px 7px; }
+  .swipe-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #fff;
+    opacity: 0.85;
+    transition: opacity .12s, filter .12s;
+  }
+  .swipe-action.edit { background: #3a6ea5; }
+  .swipe-action.delete { background: var(--bad); }
+  .swipe-wrap[data-arm="edit"] .swipe-action.edit,
+  .swipe-wrap[data-arm="delete"] .swipe-action.delete {
+    opacity: 1;
+    filter: brightness(1.08);
+  }
+  .swipe-fg {
+    position: relative;
+    z-index: 1;
+    touch-action: pan-y;
+    will-change: transform;
+    background: var(--bg-elev);
+  }
+  .swipe-fg.snapping { transition: transform .24s cubic-bezier(.22,.61,.36,1); }
+  .f-short, .lbl-short { display: none; }
   .cat-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 9px;
@@ -592,12 +625,8 @@
   .acct-value { text-align: right; }
   .acct-value .val { font-family: var(--mono); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
   .acct-value .delta { font-size: 12px; margin-top: 2px; font-family: var(--mono); }
-  .acct-actions {
-    display: flex; gap: 6px; margin-top: 10px;
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--line);
-    padding-top: 10px;
-  }
+  .acct-grid > .swipe-wrap { border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+  .acct-card.swipe-fg { border-radius: inherit; box-shadow: none; }
 
   /* ---------- modal ---------- */
   .modal-backdrop {
@@ -822,34 +851,19 @@
     .page { padding: 4px 14px 24px; }
     .topbar { padding: 12px 14px 8px; }
     .dots { gap: 32px; }
-    /* Tighter expense table on phones */
-    .table-card table { font-size: 12px; }
-    .table-card thead th { padding: 10px 8px; font-size: 10px; letter-spacing: 0.03em; }
-    .table-card tbody td { padding: 10px 8px; }
-    .table-card th:nth-child(1), .table-card td:nth-child(1),
-    .table-card th:nth-child(2), .table-card td:nth-child(2),
-    .table-card th:nth-child(3), .table-card td:nth-child(3),
-    .table-card th:nth-child(4), .table-card td:nth-child(4) {
-      width: calc((100% - 72px) / 4);
-    }
-    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 72px; }
-    .table-card .cat-chip { padding: 2px 6px; font-size: 11px; gap: 4px; }
-    .table-card td.actions { padding-left: 2px; padding-right: 6px; }
-    .table-card td.actions .btn-ghost { padding: 4px 5px; }
-    .table-card td.actions button { margin-left: 1px; }
+    /* Tighter expense list on phones + mobile-only short filter labels */
+    .exp-head { padding: 10px 8px; font-size: 10px; letter-spacing: 0.03em; gap: 8px; }
+    .exp-row { padding: 10px 8px; font-size: 12px; gap: 8px; }
+    .ec-date { font-size: 12px; }
+    .exp-row .cat-chip { padding: 2px 6px; font-size: 11px; gap: 4px; }
+    .swipe-action { padding: 0 16px; font-size: 12px; gap: 6px; }
+    .f-full, .lbl-full { display: none; }
+    .f-short, .lbl-short { display: inline; }
   }
   @media (max-width: 400px) {
-    .table-card thead th { font-size: 9px; padding: 8px 5px; }
-    .table-card tbody td { padding: 8px 5px; font-size: 11px; }
-    .table-card th:nth-child(1), .table-card td:nth-child(1),
-    .table-card th:nth-child(2), .table-card td:nth-child(2),
-    .table-card th:nth-child(3), .table-card td:nth-child(3),
-    .table-card th:nth-child(4), .table-card td:nth-child(4) {
-      width: calc((100% - 60px) / 4);
-    }
-    .table-card th:nth-child(5), .table-card td:nth-child(5) { width: 60px; }
-    .table-card td.actions .btn-ghost svg { width: 12px; height: 12px; }
-    .table-card td.actions .btn-ghost { padding: 4px 3px; }
+    .exp-head { font-size: 9px; padding: 8px 6px; gap: 6px; }
+    .exp-row { padding: 8px 6px; font-size: 11px; gap: 6px; }
+    .ec-date { font-size: 11px; }
   }
 </style>
 </head>
@@ -916,9 +930,9 @@
             <div class="sub" id="rangeLabel"></div>
           </div>
           <div class="filters" id="filters">
-            <button class="pill" data-filter="today">Today</button>
-            <button class="pill" data-filter="week">This week</button>
-            <button class="pill active" data-filter="month">This month</button>
+            <button class="pill" data-filter="today"><span class="f-full">Today</span><span class="f-short">D</span></button>
+            <button class="pill" data-filter="week"><span class="f-full">This week</span><span class="f-short">W</span></button>
+            <button class="pill active" data-filter="month"><span class="f-full">This month</span><span class="f-short">M</span></button>
             <button class="pill" data-filter="ytd">YTD</button>
             <button class="pill" data-filter="custom">Custom</button>
           </div>
@@ -990,7 +1004,7 @@
           </div>
           <button class="btn" id="modifiersBtn" aria-expanded="false">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
-            <span>Modifiers</span>
+            <span class="lbl-full">Modifiers</span><span class="lbl-short">Mods</span>
             <span class="mod-summary" id="modSummary"></span>
             <svg class="chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -1045,18 +1059,13 @@
         </form>
 
         <div class="card table-card" id="tableCard">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Vendor</th>
-                <th class="th-amount">Amount</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
+          <div class="exp-head">
+            <span>Date</span>
+            <span>Category</span>
+            <span>Vendor</span>
+            <span class="ta-right">Amount</span>
+          </div>
+          <div class="exp-list" id="tbody"></div>
           <div class="empty" id="tableEmpty" style="display:none;">
             <div class="big">No expenses yet</div>
             <div>Add one above to see it appear on the graph.</div>
@@ -1437,50 +1446,73 @@ function gotoPage(idx, animate = true) {
   });
 }
 
-// Pointer drag (mouse + touch)
-pager.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('button, input, select, textarea, a, .modal-backdrop')) return;
-  drag = { x: e.clientX, y: e.clientY, startX: e.clientX, lastDx: 0, decided: false, horizontal: false, w: pager.clientWidth };
-  pager.setPointerCapture(e.pointerId);
-});
-pager.addEventListener('pointermove', (e) => {
-  if (!drag) return;
-  const dx = e.clientX - drag.startX;
-  const dy = e.clientY - drag.y;
-  if (!drag.decided) {
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-      drag.decided = true;
-      drag.horizontal = Math.abs(dx) > Math.abs(dy);
-      if (drag.horizontal) track.classList.add('dragging');
+// Page navigation is via the dots and arrow keys only (no horizontal page swipe \u2014
+// horizontal swipe is reserved for row/card edit & delete actions).
+
+/* ------------------------------------------------------------
+   Swipe-to-act: swipe a row/card RIGHT to edit, LEFT to delete.
+   Works with touch and mouse (pointer events). Vertical scrolling
+   is preserved via touch-action: pan-y + an intent-decision phase.
+   ------------------------------------------------------------ */
+function wireSwipe(wrap, { onEdit, onDelete }) {
+  const fg = wrap.querySelector('.swipe-fg');
+  if (!fg) return;
+  const COMMIT = 72;   // px past which the action fires
+  const MAX = 132;     // max travel
+  let s = null;
+
+  const resist = (dx) => {
+    const m = Math.max(-MAX, Math.min(MAX, dx));
+    // soft resistance past the commit point
+    return m;
+  };
+
+  fg.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    if (e.target.closest('button, input, select, textarea, a')) return;
+    s = { x: e.clientX, y: e.clientY, dx: 0, decided: false, horiz: false, id: e.pointerId };
+    fg.classList.remove('snapping');
+  });
+  fg.addEventListener('pointermove', (e) => {
+    if (!s) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (!s.decided) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      s.decided = true;
+      s.horiz = Math.abs(dx) > Math.abs(dy);
+      if (s.horiz) { try { fg.setPointerCapture(s.id); } catch (_) {} }
+      else { s = null; return; }
     }
-  }
-  if (drag.horizontal) {
+    if (!s.horiz) return;
     e.preventDefault();
-    drag.lastDx = dx;
-    const pct = (dx / drag.w) * 33.3333;
-    const base = -currentPage * 33.3333;
-    track.style.transform = `translate3d(${base + pct}%, 0, 0)`;
+    s.dx = resist(dx);
+    fg.style.transform = `translateX(${s.dx}px)`;
+    const arm = s.dx <= -COMMIT ? 'delete' : s.dx >= COMMIT ? 'edit' : '';
+    if (arm) wrap.setAttribute('data-arm', arm); else wrap.removeAttribute('data-arm');
+  });
+  function end() {
+    if (!s) return;
+    const dx = s.dx, horiz = s.horiz;
+    s = null;
+    wrap.removeAttribute('data-arm');
+    fg.classList.add('snapping');
+    fg.style.transform = 'translateX(0)';
+    if (!horiz) return;
+    if (dx <= -COMMIT) setTimeout(onDelete, 60);
+    else if (dx >= COMMIT) setTimeout(onEdit, 60);
   }
-});
-function endDrag(e) {
-  if (!drag) return;
-  if (drag.horizontal) {
-    // On iOS the system back-swipe (drag rightward from the left edge) can
-    // hijack the gesture and fire pointercancel early, leaving e.clientX stale.
-    // Fall back to the last delta we tracked so the page still flips.
-    const liveDx = e.clientX - drag.startX;
-    const dx = Math.abs(liveDx) >= Math.abs(drag.lastDx) ? liveDx : drag.lastDx;
-    // Forgiving threshold: ~12% of width, capped so a short flick still counts.
-    const threshold = Math.min(drag.w * 0.12, 56);
-    let next = currentPage;
-    if (dx < -threshold) next = Math.min(2, currentPage + 1);
-    else if (dx > threshold) next = Math.max(0, currentPage - 1);
-    gotoPage(next, true);
-  }
-  drag = null;
+  fg.addEventListener('pointerup', end);
+  fg.addEventListener('pointercancel', end);
 }
-pager.addEventListener('pointerup', endDrag);
-pager.addEventListener('pointercancel', endDrag);
+function wireSwipes(container, attr, onEdit, onDelete) {
+  container.querySelectorAll('.swipe-wrap').forEach(wrap => {
+    const fg = wrap.querySelector('.swipe-fg');
+    const id = fg && fg.getAttribute(attr);
+    if (!id) return;
+    wireSwipe(wrap, { onEdit: () => onEdit(id), onDelete: () => onDelete(id) });
+  });
+}
 
 // arrow keys
 window.addEventListener('keydown', (e) => {
@@ -1646,7 +1678,7 @@ function renderModifiers() {
     ? `${fmtMoney(base)} \u2212 ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
     : '';
   const summary = $('#modSummary');
-  // Per request, do not show the dollar amount on the button â€” keep a subtle
+  // Per request, do not show the dollar amount on the button — keep a subtle
   // count so the user knows modifiers are active.
   if (mods.length > 0) {
     summary.textContent = `(${mods.length})`;
@@ -2068,6 +2100,17 @@ fillCategoryOptions($('#editCategory'));
 $('#newDate').value = todayISO();
 
 const tbody = $('#tbody');
+const SWIPE_HINT = `
+  <div class="swipe-actions" aria-hidden="true">
+    <span class="swipe-action edit">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit
+    </span>
+    <span class="swipe-action delete">
+      Delete
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+    </span>
+  </div>`;
 function renderTable() {
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
   $('#tableSubtitle').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
@@ -2076,38 +2119,29 @@ function renderTable() {
     const cat = CATEGORIES.find(c => c.id === x.category) || CATEGORIES.at(-1);
     const vendor = x.vendor ? escapeHtml(x.vendor) : '<span style="color: var(--ink-3);">&mdash;</span>';
     return `
-      <tr>
-        <td class="mono" style="font-family: var(--mono); color: var(--ink-2);">${fmtDate(x.date)}</td>
-        <td><span class="cat-chip"><span class="swatch" style="background:${cat.color}"></span>${cat.label}</span></td>
-        <td>${vendor}</td>
-        <td class="amount">${fmtMoney(x.amount)}</td>
-        <td class="actions">
-          <button class="btn btn-ghost" data-edit="${x.id}" title="Edit">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="btn btn-ghost" data-del="${x.id}" title="Delete">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
-          </button>
-        </td>
-      </tr>
+      <div class="swipe-wrap exp-wrap">
+        ${SWIPE_HINT}
+        <div class="exp-row swipe-fg" data-exp="${x.id}">
+          <span class="ec-date">${fmtDate(x.date)}</span>
+          <span class="ec-cat"><span class="cat-chip"><span class="swatch" style="background:${cat.color}"></span>${cat.label}</span></span>
+          <span class="ec-vendor">${vendor}</span>
+          <span class="ec-amt">${fmtMoney(x.amount)}</span>
+        </div>
+      </div>
     `;
   }).join('');
+  wireSwipes(tbody, 'data-exp', openEditExpense, deleteExpense);
 }
-tbody.addEventListener('click', (e) => {
-  const ed = e.target.closest('[data-edit]');
-  const del = e.target.closest('[data-del]');
-  if (ed) openEditExpense(ed.dataset.edit);
-  if (del) {
-    const x = expenses.find(x => x.id === del.dataset.del);
-    if (!x) return;
-    if (confirm(`Delete ${fmtMoney(x.amount)} expense on ${fmtDate(x.date)}?`)) {
-      expenses = expenses.filter(e => e.id !== del.dataset.del);
-      save(STORE_EXP, expenses);
-      redrawAll();
-      toast('Expense deleted');
-    }
+function deleteExpense(id) {
+  const x = expenses.find(x => x.id === id);
+  if (!x) return;
+  if (confirm(`Delete ${fmtMoney(x.amount)} expense on ${fmtDate(x.date)}?`)) {
+    expenses = expenses.filter(e => e.id !== id);
+    save(STORE_EXP, expenses);
+    redrawAll();
+    toast('Expense deleted');
   }
-});
+}
 
 $('#addForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -2328,26 +2362,23 @@ function renderAccounts() {
       const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
       const deltaColor = delta >= 0 ? 'var(--good)' : 'var(--bad)';
       return `
-        <div class="card acct-card">
-          <div class="acct-mark" style="background:${a.color}">${initials}</div>
-          <div class="acct-info">
-            <div class="name">${escapeHtml(a.name)}</div>
-            <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' \u00B7 last ' + fmtDateShort(latest.date) : ''}</div>
-          </div>
-          <div class="acct-value">
-            <div class="val">${fmtMoney(value)}</div>
-            <div class="delta" style="color:${deltaColor}">${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
-          </div>
-          <div class="acct-actions">
-            <button class="btn" data-edit-acct="${a.id}">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit / import CSV
-            </button>
-            <button class="btn btn-danger" data-del-acct="${a.id}">Delete</button>
+        <div class="swipe-wrap">
+          ${SWIPE_HINT}
+          <div class="card acct-card swipe-fg" data-acct="${a.id}">
+            <div class="acct-mark" style="background:${a.color}">${initials}</div>
+            <div class="acct-info">
+              <div class="name">${escapeHtml(a.name)}</div>
+              <div class="meta">${points} data point${points === 1 ? '' : 's'}${latest ? ' \u00B7 last ' + fmtDateShort(latest.date) : ''}</div>
+            </div>
+            <div class="acct-value">
+              <div class="val">${fmtMoney(value)}</div>
+              <div class="delta" style="color:${deltaColor}">${fmtMoney(delta, true)} (${pct.toFixed(1)}%)</div>
+            </div>
           </div>
         </div>
       `;
     }).join('');
+    wireSwipes(acctGrid, 'data-acct', openAccountModal, deleteAccount);
   }
   drawAccountsChart();
   renderAcctLegend();
@@ -2356,21 +2387,19 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-acctGrid.addEventListener('click', (e) => {
-  const ed = e.target.closest('[data-edit-acct]');
-  const del = e.target.closest('[data-del-acct]');
-  if (ed) openAccountModal(ed.dataset.editAcct);
-  if (del) {
-    const a = accounts.find(x => x.id === del.dataset.delAcct);
-    if (!a) return;
-    if (confirm(`Delete account "${a.name}"? Its data will be lost.`)) {
-      accounts = accounts.filter(x => x.id !== a.id);
-      save(STORE_ACCT, accounts);
-      renderAccounts();
-      toast('Account deleted');
-    }
-  }
+acctGrid.addEventListener('click', () => {
+  // Tapping an account card does nothing — edit/delete are swipe gestures now.
 });
+function deleteAccount(id) {
+  const a = accounts.find(x => x.id === id);
+  if (!a) return;
+  if (confirm(`Delete account "${a.name}"? Its data will be lost.`)) {
+    accounts = accounts.filter(x => x.id !== id);
+    save(STORE_ACCT, accounts);
+    renderAccounts();
+    toast('Account deleted');
+  }
+}
 
 /* ---------- account modal ---------- */
 let editingAcctId = null;
@@ -2556,7 +2585,7 @@ function drawAccountsChart() {
     const netPoints = sortedDates.map(date => {
       let sum = 0;
       allSeries.forEach(s => {
-        // points are sorted ascending by date â€” grab the latest â‰¤ date
+        // points are sorted ascending by date — grab the latest ≤ date
         let latest = null;
         for (const p of s.points) {
           if (p.date <= date) latest = p; else break;
@@ -2971,4 +3000,3 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
-
