@@ -4,6 +4,19 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>BudgetBuddy</title>
+
+<!-- Favicon & icons -->
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="shortcut icon" type="image/png" href="favicon.png" />
+<link rel="apple-touch-icon" href="favicon.png" />
+
+<!-- PWA / web app -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#fafaf7" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="BudgetBuddy" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -1220,15 +1233,7 @@
         </div>
 
         <div class="card cat-card">
-          <div class="chart-meta">
-            <span>spending by category</span>
-            <div class="filters cat-view-toggle" id="catViewToggle">
-              <button class="pill" data-view="bar">Bars</button>
-              <button class="pill" data-view="donut">Donut</button>
-            </div>
-          </div>
-          <div class="cat-bars" id="catBars"></div>
-          <div class="cat-donut-wrap" id="catDonut" style="display:none;"></div>
+          <div class="cat-donut-wrap" id="catDonut"></div>
         </div>
 
         <form class="add-form card" id="addForm">
@@ -2359,33 +2364,13 @@ function renderCategoryBars() {
   $('#ctCats').textContent = String(cats.length);
   $('#expToggleCount').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
 
-  // sync the view toggle
-  $$('.pill', $('#catViewToggle')).forEach(p => p.classList.toggle('active', p.dataset.view === settings.catView));
-  const isDonut = settings.catView === 'donut';
-  $('#catBars').style.display = isDonut ? 'none' : 'flex';
-  $('#catDonut').style.display = isDonut ? 'flex' : 'none';
-
-  const barsEl = $('#catBars');
   const donutEl = $('#catDonut');
+  donutEl.style.display = 'flex';
 
   if (cats.length === 0) {
-    const empty = `<div class="cat-empty">No expenses yet &mdash; add one below to see the breakdown.</div>`;
-    barsEl.innerHTML = empty;
-    donutEl.innerHTML = empty;
+    donutEl.innerHTML = `<div class="cat-empty">No expenses yet &mdash; add one below to see the breakdown.</div>`;
     return;
   }
-
-  // ---- Bars ----
-  barsEl.innerHTML = cats.map(c => {
-    const pct = (c.amount / max) * 100;
-    const share = total ? (c.amount / total) * 100 : 0;
-    return `
-      <div class="cat-bar-row">
-        <span class="cat-bar-label"><span class="swatch" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>
-        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%; background:${c.color}"></div></div>
-        <span class="cat-bar-amt">${fmtMoney(c.amount)}<span class="cat-bar-share">${share.toFixed(0)}%</span></span>
-      </div>`;
-  }).join('');
 
   // ---- Donut ----
   let acc = 0;
@@ -2412,14 +2397,6 @@ function renderCategoryBars() {
     </div>
     <div class="cat-legend">${legend}</div>`;
 }
-
-$('#catViewToggle').addEventListener('click', (e) => {
-  const btn = e.target.closest('.pill');
-  if (!btn) return;
-  settings.catView = btn.dataset.view;
-  save(STORE_SETTINGS, settings);
-  renderCategoryBars();
-});
 
 $('#expToggle').addEventListener('click', () => {
   const card = $('#tableCard');
