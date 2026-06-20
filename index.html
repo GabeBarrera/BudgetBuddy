@@ -241,6 +241,19 @@
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
+    line-height: 1.4;
+  }
+  /* Native <select> ignores padding/line-height and renders at its own
+     intrinsic height, so it ends up a different height than the text inputs.
+     Strip the native appearance and supply a custom arrow so it sizes exactly
+     like .input. */
+  .select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
   }
   /* iOS renders type=date with a fixed intrinsic width that won't shrink and
      overflows its grid track into the next field. Strip the native appearance
@@ -597,6 +610,110 @@
   .empty .big {
     font-size: 16px; color: var(--ink); font-weight: 500;
     margin-bottom: 6px;
+  }
+
+  /* ---------- category breakdown (table page) ---------- */
+  .cat-totals {
+    display: flex;
+    gap: clamp(18px, 5vw, 40px);
+    align-items: baseline;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 0 2px;
+  }
+  .cat-totals .total-block .value { font-size: clamp(22px, 5vw, 30px); }
+
+  .cat-card {
+    padding: clamp(16px, 3vw, 22px);
+    margin-bottom: 18px;
+  }
+  .cat-bars {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.6vw, 12px);
+  }
+  .cat-bar-row {
+    display: grid;
+    grid-template-columns: clamp(92px, 26%, 150px) 1fr auto;
+    align-items: center;
+    gap: clamp(8px, 2vw, 14px);
+  }
+  .cat-bar-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .cat-bar-label .swatch {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  }
+  .cat-bar-track {
+    height: clamp(14px, 2.4vw, 20px);
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    min-width: 3px;
+    transition: width .4s cubic-bezier(.22,.61,.36,1);
+  }
+  .cat-bar-amt {
+    font-family: var(--mono); font-weight: 600; font-size: 13px;
+    color: var(--ink); white-space: nowrap;
+    display: inline-flex; align-items: baseline; gap: 7px;
+    justify-self: end;
+  }
+  .cat-bar-amt .cat-bar-share {
+    font-weight: 500; font-size: 11px; color: var(--ink-3);
+  }
+  .cat-empty {
+    padding: 28px 16px; text-align: center;
+    color: var(--ink-3); font-size: 13px;
+  }
+
+  /* ---------- expenses toggle (drops the table down) ---------- */
+  .exp-toggle {
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: clamp(14px, 2.6vw, 22px) clamp(16px, 3.4vw, 26px);
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    transition: background .15s, border-color .15s, border-radius .2s;
+  }
+  .exp-toggle:hover { border-color: var(--line-strong); background: var(--bg-sunken); }
+  .exp-toggle:active { transform: translateY(1px); }
+  .exp-toggle .et-left {
+    display: inline-flex; align-items: baseline; gap: clamp(8px, 2vw, 14px);
+    font-weight: 600; font-size: clamp(15px, 2.4vw, 19px);
+    letter-spacing: -0.01em;
+  }
+  .exp-toggle .et-count {
+    font-family: var(--mono); font-size: clamp(11px, 1.6vw, 13px);
+    color: var(--ink-3); font-weight: 500;
+  }
+  .exp-toggle .et-chev {
+    width: clamp(16px, 2.4vw, 20px); height: clamp(16px, 2.4vw, 20px);
+    color: var(--ink-3); flex-shrink: 0;
+    transition: transform .25s;
+  }
+  .exp-toggle[aria-expanded="true"] .et-chev { transform: rotate(180deg); }
+  .exp-toggle[aria-expanded="true"] {
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+    background: var(--bg-sunken);
+  }
+  #tableCard.dropped {
+    margin-top: 0;
+    border-top-left-radius: 0; border-top-right-radius: 0;
+    animation: drop-in .22s ease-out;
   }
 
   /* ---------- accounts ---------- */
@@ -1042,6 +1159,29 @@
           </div>
         </div>
 
+        <div class="cat-totals" id="catTotals">
+          <div class="total-block">
+            <div class="label">Total spent</div>
+            <div class="value mono" id="ctTotal">$0.00</div>
+          </div>
+          <div class="total-block">
+            <div class="label">Entries</div>
+            <div class="value mono" id="ctEntries">0</div>
+          </div>
+          <div class="total-block">
+            <div class="label">Categories</div>
+            <div class="value mono" id="ctCats">0</div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="chart-meta">
+            <span>spending by category</span>
+            <span id="catTopLabel"></span>
+          </div>
+          <div class="cat-bars" id="catBars"></div>
+        </div>
+
         <form class="add-form card" id="addForm">
           <div class="field">
             <label for="newDate">Date</label>
@@ -1065,7 +1205,15 @@
           </button>
         </form>
 
-        <div class="card table-card" id="tableCard">
+        <button class="exp-toggle" id="expToggle" aria-expanded="false" aria-controls="tableCard">
+          <span class="et-left">
+            Expenses
+            <span class="et-count" id="expToggleCount"></span>
+          </span>
+          <svg class="et-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+
+        <div class="card table-card" id="tableCard" hidden>
           <div class="exp-head">
             <span>Date</span>
             <span>Category</span>
@@ -2140,6 +2288,53 @@ function renderTable() {
   }).join('');
   wireSwipes(tbody, 'data-exp', openEditExpense, deleteExpense);
 }
+
+/* ---------- category breakdown + expenses toggle ---------- */
+function renderCategoryBars() {
+  const byCat = {};
+  let total = 0;
+  expenses.forEach(x => {
+    const amt = +x.amount || 0;
+    byCat[x.category] = (byCat[x.category] || 0) + amt;
+    total += amt;
+  });
+  const cats = CATEGORIES
+    .map(c => ({ id: c.id, label: c.label, color: c.color, amount: byCat[c.id] || 0 }))
+    .filter(c => c.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+  const max = cats.length ? cats[0].amount : 1;
+
+  $('#ctTotal').textContent = fmtMoney(total);
+  $('#ctEntries').textContent = String(expenses.length);
+  $('#ctCats').textContent = String(cats.length);
+  $('#expToggleCount').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
+  $('#catTopLabel').textContent = cats.length ? `top: ${cats[0].label.toLowerCase()}` : '';
+
+  const bars = $('#catBars');
+  if (cats.length === 0) {
+    bars.innerHTML = `<div class="cat-empty">No expenses yet &mdash; add one below to see the breakdown.</div>`;
+    return;
+  }
+  bars.innerHTML = cats.map(c => {
+    const pct = (c.amount / max) * 100;
+    const share = total ? (c.amount / total) * 100 : 0;
+    return `
+      <div class="cat-bar-row">
+        <span class="cat-bar-label"><span class="swatch" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%; background:${c.color}"></div></div>
+        <span class="cat-bar-amt">${fmtMoney(c.amount)}<span class="cat-bar-share">${share.toFixed(0)}%</span></span>
+      </div>`;
+  }).join('');
+}
+
+$('#expToggle').addEventListener('click', () => {
+  const card = $('#tableCard');
+  const btn = $('#expToggle');
+  const open = !card.hidden;
+  card.hidden = open;
+  card.classList.toggle('dropped', !open);
+  btn.setAttribute('aria-expanded', String(!open));
+});
 function deleteExpense(id) {
   const x = expenses.find(x => x.id === id);
   if (!x) return;
@@ -2988,6 +3183,7 @@ function toast(msg) {
    ============================================================ */
 function redrawAll() {
   renderTable();
+  renderCategoryBars();
   renderAccounts();
   renderModifiers();
   renderGraph();
