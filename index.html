@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -722,6 +722,36 @@
     font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--ink-3); margin-top: 3px;
   }
+  .cat-donut .slice-pct {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-family: var(--mono);
+    font-size: clamp(10px, 2.4vw, 12px);
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .cat-donut .donut-tip {
+    position: absolute;
+    transform: translate(-50%, -140%);
+    background: var(--ink);
+    color: var(--bg-elev);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 9px;
+    border-radius: 7px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s;
+    z-index: 6;
+    display: inline-flex; align-items: center; gap: 7px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+  .cat-donut .donut-tip.show { opacity: 1; }
+  .cat-donut .donut-tip .dt-sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
   .cat-legend {
     display: flex; flex-direction: column; gap: clamp(7px, 1.4vw, 10px);
     flex: 1; min-width: 180px;
@@ -1108,7 +1138,7 @@
       <div class="page" data-page="graph">
         <div class="page-head">
           <div>
-            <h1>Expenses</h1>
+            <h1>Overview</h1>
             <div class="sub" id="rangeLabel"></div>
           </div>
           <div class="filters" id="filters">
@@ -1195,8 +1225,8 @@
         <div class="modifiers-panel" id="modifiersPanel" hidden>
           <div class="mod-head">
             <div>
-              <div class="mod-title">Monthly modifiers</div>
-              <div class="mod-sub" id="modSubLine">These reduce the monthly limit before it scales to the active filter.</div>
+              <div class="mod-title">Monthly Modifiers (Recurring)</div>
+              <div class="mod-sub" id="modSubLine">These recurring costs reduce the monthly limit before it scales to the active filter.</div>
             </div>
             <div class="mod-totals" id="modTotals"></div>
           </div>
@@ -1212,8 +1242,49 @@
       <div class="page" data-page="table">
         <div class="page-head">
           <div>
-            <h1>Expense log</h1>
+            <h1>Expenses</h1>
             <div class="sub" id="tableSubtitle">&mdash; entries</div>
+          </div>
+          <div class="filters" id="filters2">
+            <button class="pill" data-filter="today"><span class="f-full">Today</span><span class="f-short">D</span></button>
+            <button class="pill" data-filter="week"><span class="f-full">This week</span><span class="f-short">W</span></button>
+            <button class="pill active" data-filter="month"><span class="f-full">This month</span><span class="f-short">M</span></button>
+            <button class="pill" data-filter="ytd">YTD</button>
+            <button class="pill" data-filter="custom"><span class="f-full">Custom</span><span class="f-short">More</span></button>
+          </div>
+        </div>
+
+        <div class="custom-range hidden" id="customRange2">
+          <div class="filters" id="customMode2" style="margin-bottom: 4px; margin-left: auto;">
+            <button class="pill active" data-mode="range">Date range</button>
+            <button class="pill" data-mode="month">Single month</button>
+            <button class="pill" data-mode="year">Single year</button>
+          </div>
+          <div class="custom-pane" data-pane="range">
+            <div class="field" style="flex:1;">
+              <label>From</label>
+              <input type="date" id="customFrom2" class="input mono" />
+            </div>
+            <div class="field" style="flex:1;">
+              <label>To</label>
+              <input type="date" id="customTo2" class="input mono" />
+            </div>
+          </div>
+          <div class="custom-pane" data-pane="month" style="display:none;">
+            <div class="field" style="flex:1;">
+              <label>Month</label>
+              <select id="customMonth2" class="select"></select>
+            </div>
+            <div class="field" style="flex:1;">
+              <label>Year</label>
+              <select id="customYearM2" class="select"></select>
+            </div>
+          </div>
+          <div class="custom-pane" data-pane="year" style="display:none;">
+            <div class="field" style="flex:1; max-width: 220px;">
+              <label>Year</label>
+              <select id="customYear2" class="select"></select>
+            </div>
           </div>
         </div>
 
@@ -1233,6 +1304,12 @@
         </div>
 
         <div class="card cat-card">
+          <div class="chart-meta">
+            <div class="filters cat-view-toggle" id="donutViewToggle">
+              <button class="pill" data-dview="category">Category</button>
+              <button class="pill" data-dview="budget">Budget</button>
+            </div>
+          </div>
           <div class="cat-donut-wrap" id="catDonut"></div>
         </div>
 
@@ -1292,11 +1369,11 @@
     </button>
     <button class="dot active" data-page-idx="1">
       <span class="pip"></span>
-      Expenses
+      Overview
     </button>
     <button class="dot" data-page-idx="2">
       <span class="pip"></span>
-      Log
+      Expenses
     </button>
   </nav>
 </div>
@@ -1616,7 +1693,7 @@ let accounts = load(STORE_ACCT, null);
 let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customMode: 'range', customFrom: null, customTo: null, customMonth: null, customYearM: null, customYear: null, theme: 'light', modifiers: [] };
 if (!settings.customMode) settings.customMode = 'range';
 if (!Array.isArray(settings.modifiers)) settings.modifiers = [];
-if (settings.catView !== 'bar' && settings.catView !== 'donut') settings.catView = 'bar';
+if (settings.donutView !== 'category' && settings.donutView !== 'budget') settings.donutView = 'category';
 // Migrate old 'year' filter (which meant trailing-year) to 'ytd'
 if (settings.filter === 'year') settings.filter = 'ytd';
 
@@ -1757,19 +1834,8 @@ const customRangeEl = $('#customRange');
 const monthlyLimitEl = $('#monthlyLimit');
 monthlyLimitEl.value = settings.monthlyLimit;
 
-filterEl.addEventListener('click', (e) => {
-  const btn = e.target.closest('.pill');
-  if (!btn) return;
-  $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p === btn));
-  settings.filter = btn.dataset.filter;
-  customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
-  if (settings.filter === 'custom') initCustomDefaults();
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
-// activate stored filter
-$$('.pill', filterEl).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
-customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
+// Filter wiring is set up generically for both the Overview and Expenses
+// views by wireFilters() below; both bars stay in sync via settings.filter.
 
 /* ---------- custom mode setup ---------- */
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1803,54 +1869,66 @@ function initCustomDefaults() {
   if (settings.customYear == null)  settings.customYear  = CURRENT_YEAR - 1;
   if (settings.customYearM == null) settings.customYearM = CURRENT_YEAR;
   if (settings.customMonth == null) settings.customMonth = new Date().getMonth();
-  $('#customFrom').value = settings.customFrom;
-  $('#customTo').value = settings.customTo;
-  buildYearOptions($('#customYear'), settings.customYear);
-  buildYearOptions($('#customYearM'), settings.customYearM);
-  buildMonthOptions($('#customMonth'), settings.customMonth);
-  applyCustomMode();
+  syncFilterUI();
 }
-function applyCustomMode() {
-  $$('.pill', $('#customMode')).forEach(p => p.classList.toggle('active', p.dataset.mode === settings.customMode));
-  $$('.custom-pane').forEach(p => p.style.display = (p.dataset.pane === settings.customMode) ? 'flex' : 'none');
+
+const FILTER_SETS = ['', '2'];
+
+function syncFilterUI() {
+  FILTER_SETS.forEach(sfx => {
+    const fe = document.getElementById('filters' + sfx);
+    if (fe) $$('.pill', fe).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
+    const cr = document.getElementById('customRange' + sfx);
+    if (cr) {
+      cr.classList.toggle('hidden', settings.filter !== 'custom');
+      $$('.custom-pane', cr).forEach(p => p.style.display = (p.dataset.pane === settings.customMode) ? 'flex' : 'none');
+    }
+    const cm = document.getElementById('customMode' + sfx);
+    if (cm) $$('.pill', cm).forEach(p => p.classList.toggle('active', p.dataset.mode === settings.customMode));
+    const cf = document.getElementById('customFrom' + sfx); if (cf && settings.customFrom) cf.value = settings.customFrom;
+    const ct = document.getElementById('customTo' + sfx);   if (ct && settings.customTo)   ct.value = settings.customTo;
+    const mo = document.getElementById('customMonth' + sfx); if (mo) buildMonthOptions(mo, settings.customMonth);
+    const ym = document.getElementById('customYearM' + sfx); if (ym) buildYearOptions(ym, settings.customYearM);
+    const yr = document.getElementById('customYear' + sfx);  if (yr) buildYearOptions(yr, settings.customYear);
+  });
 }
-// initial setup if custom is active
+
+function applyFilterChange() {
+  save(STORE_SETTINGS, settings);
+  syncFilterUI();
+  redrawAll();
+}
+
+function wireFilters() {
+  FILTER_SETS.forEach(sfx => {
+    const fe = document.getElementById('filters' + sfx);
+    if (fe) fe.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill'); if (!btn) return;
+      settings.filter = btn.dataset.filter;
+      if (settings.filter === 'custom') initCustomDefaults();
+      applyFilterChange();
+    });
+    const cm = document.getElementById('customMode' + sfx);
+    if (cm) cm.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill'); if (!btn) return;
+      settings.customMode = btn.dataset.mode;
+      applyFilterChange();
+    });
+    const cf = document.getElementById('customFrom' + sfx);
+    if (cf) cf.addEventListener('change', (e) => { settings.customFrom = e.target.value; applyFilterChange(); });
+    const ct = document.getElementById('customTo' + sfx);
+    if (ct) ct.addEventListener('change', (e) => { settings.customTo = e.target.value; applyFilterChange(); });
+    const mo = document.getElementById('customMonth' + sfx);
+    if (mo) mo.addEventListener('change', (e) => { settings.customMonth = +e.target.value; applyFilterChange(); });
+    const ym = document.getElementById('customYearM' + sfx);
+    if (ym) ym.addEventListener('change', (e) => { settings.customYearM = +e.target.value; applyFilterChange(); });
+    const yr = document.getElementById('customYear' + sfx);
+    if (yr) yr.addEventListener('change', (e) => { settings.customYear = +e.target.value; applyFilterChange(); });
+  });
+}
+wireFilters();
 if (settings.filter === 'custom') initCustomDefaults();
-
-$('#customMode').addEventListener('click', (e) => {
-  const btn = e.target.closest('.pill');
-  if (!btn) return;
-  settings.customMode = btn.dataset.mode;
-  save(STORE_SETTINGS, settings);
-  applyCustomMode();
-  renderGraph();
-});
-
-$('#customFrom').addEventListener('change', (e) => {
-  settings.customFrom = e.target.value;
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
-$('#customTo').addEventListener('change', (e) => {
-  settings.customTo = e.target.value;
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
-$('#customMonth').addEventListener('change', (e) => {
-  settings.customMonth = +e.target.value;
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
-$('#customYearM').addEventListener('change', (e) => {
-  settings.customYearM = +e.target.value;
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
-$('#customYear').addEventListener('change', (e) => {
-  settings.customYear = +e.target.value;
-  save(STORE_SETTINGS, settings);
-  renderGraph();
-});
+syncFilterUI();
 monthlyLimitEl.addEventListener('input', (e) => {
   const n = +e.target.value;
   if (Number.isFinite(n) && n >= 0) {
@@ -1858,6 +1936,7 @@ monthlyLimitEl.addEventListener('input', (e) => {
     save(STORE_SETTINGS, settings);
     renderModifiers();
     renderGraph();
+    renderCategoryBars();
   }
 });
 
@@ -1888,7 +1967,7 @@ function renderModifiers() {
     ? `${fmtMoney(base)} \u2212 ${fmtMoney(modSum)}<span class="net">${fmtMoney(net)} / mo</span>`
     : '';
   const summary = $('#modSummary');
-  // Per request, do not show the dollar amount on the button — keep a subtle
+  // Per request, do not show the dollar amount on the button â€” keep a subtle
   // count so the user knows modifiers are active.
   $('#modifiersBtn').classList.toggle('has-mods', mods.length > 0);
   if (mods.length > 0) {
@@ -1917,6 +1996,7 @@ $('#modList').addEventListener('click', (e) => {
     save(STORE_SETTINGS, settings);
     renderModifiers();
     renderGraph();
+    renderCategoryBars();
     toast('Modifier removed');
   }
 });
@@ -1956,6 +2036,7 @@ $('#modSaveBtn').addEventListener('click', () => {
   $('#modifiersBtn').setAttribute('aria-expanded', 'true');
   renderModifiers();
   renderGraph();
+  renderCategoryBars();
   toast('Modifier added');
 });
 
@@ -2323,9 +2404,10 @@ const SWIPE_HINT = `
     </span>
   </div>`;
 function renderTable() {
-  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
-  $('#tableSubtitle').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
-  $('#tableEmpty').style.display = expenses.length === 0 ? 'block' : 'none';
+  const list = filteredExpenses();
+  const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
+  $('#tableSubtitle').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+  $('#tableEmpty').style.display = list.length === 0 ? 'block' : 'none';
   tbody.innerHTML = sorted.map(x => {
     const cat = CATEGORIES.find(c => c.id === x.category) || CATEGORIES.at(-1);
     const vendor = x.vendor ? escapeHtml(x.vendor) : '<span style="color: var(--ink-3);">&mdash;</span>';
@@ -2346,9 +2428,10 @@ function renderTable() {
 
 /* ---------- category breakdown + expenses toggle ---------- */
 function renderCategoryBars() {
+  const list = filteredExpenses();
   const byCat = {};
   let total = 0;
-  expenses.forEach(x => {
+  list.forEach(x => {
     const amt = +x.amount || 0;
     byCat[x.category] = (byCat[x.category] || 0) + amt;
     total += amt;
@@ -2357,15 +2440,22 @@ function renderCategoryBars() {
     .map(c => ({ id: c.id, label: c.label, color: c.color, amount: byCat[c.id] || 0 }))
     .filter(c => c.amount > 0)
     .sort((a, b) => b.amount - a.amount);
-  const max = cats.length ? cats[0].amount : 1;
 
   $('#ctTotal').textContent = fmtMoney(total);
-  $('#ctEntries').textContent = String(expenses.length);
+  $('#ctEntries').textContent = String(list.length);
   $('#ctCats').textContent = String(cats.length);
-  $('#expToggleCount').textContent = `${expenses.length} ${expenses.length === 1 ? 'entry' : 'entries'}`;
+  $('#expToggleCount').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+
+  const view = settings.donutView === 'budget' ? 'budget' : 'category';
+  $$('.pill', $('#donutViewToggle')).forEach(p => p.classList.toggle('active', p.dataset.dview === view));
 
   const donutEl = $('#catDonut');
   donutEl.style.display = 'flex';
+
+  if (view === 'budget') {
+    renderBudgetDonut(donutEl);
+    return;
+  }
 
   if (cats.length === 0) {
     donutEl.innerHTML = `<div class="cat-empty">No expenses yet &mdash; add one below to see the breakdown.</div>`;
@@ -2373,13 +2463,8 @@ function renderCategoryBars() {
   }
 
   // ---- Donut ----
-  let acc = 0;
-  const stops = cats.map(c => {
-    const start = total ? (acc / total) * 360 : 0;
-    acc += c.amount;
-    const end = total ? (acc / total) * 360 : 0;
-    return `${c.color} ${start.toFixed(2)}deg ${end.toFixed(2)}deg`;
-  }).join(', ');
+  const dsegs = buildDonutSegments(cats, total);
+  const stops = dsegs.map(s => `${s.color} ${s.start.toFixed(2)}deg ${s.end.toFixed(2)}deg`).join(', ');
   const legend = cats.map(c => {
     const share = total ? (c.amount / total) * 100 : 0;
     return `
@@ -2390,13 +2475,148 @@ function renderCategoryBars() {
   }).join('');
   donutEl.innerHTML = `
     <div class="cat-donut" style="background: conic-gradient(${stops})">
+      ${donutSlicePcts(dsegs)}
       <div class="hole">
         <div class="h-val">${fmtMoney(total)}</div>
         <div class="h-lbl">total</div>
       </div>
     </div>
     <div class="cat-legend">${legend}</div>`;
+  wireDonut(donutEl, dsegs);
 }
+
+/* ---------- budget donut (recurring / needs / wants / remaining) ---------- */
+const NEEDS_CATS = new Set(['groceries', 'gas', 'transit', 'utilities', 'health', 'rent']);
+const WANTS_CATS = new Set(['food', 'subscriptions', 'shopping', 'travel', 'other', 'entertainment']);
+
+function renderBudgetDonut(donutEl) {
+  const list = filteredExpenses();
+  let needs = 0, wants = 0;
+  list.forEach(x => {
+    const amt = +x.amount || 0;
+    if (NEEDS_CATS.has(x.category)) needs += amt;
+    else wants += amt;
+  });
+  const scale = getWindowScale();
+  const recurring = (settings.modifiers || []).reduce((s, m) => s + (+m.amount || 0), 0) * scale;
+  const income = (+settings.monthlyLimit || 0) * scale;
+  const remaining = Math.max(0, income - recurring - needs - wants);
+
+  const segs = [
+    { label: 'Recurring', amount: recurring, color: 'oklch(0.55 0.14 290)' },
+    { label: 'Needs',     amount: needs,     color: 'oklch(0.60 0.14 150)' },
+    { label: 'Wants',     amount: wants,     color: 'oklch(0.65 0.16 35)' },
+    { label: 'Remaining', amount: remaining, color: 'oklch(0.80 0.025 240)' },
+  ];
+  const sum = segs.reduce((s, x) => s + x.amount, 0);
+
+  if (sum <= 0) {
+    donutEl.innerHTML = `<div class="cat-empty">Set a monthly income in the overview to see your budget breakdown.</div>`;
+    return;
+  }
+
+  const drawn = segs.filter(s => s.amount > 0);
+  const dsegs = buildDonutSegments(drawn, sum);
+  const stops = dsegs.map(s => `${s.color} ${s.start.toFixed(2)}deg ${s.end.toFixed(2)}deg`).join(', ');
+  const legend = segs.map(s => {
+    const share = sum ? (s.amount / sum) * 100 : 0;
+    return `
+      <div class="cat-legend-row">
+        <span class="cat-bar-label"><span class="swatch" style="background:${s.color}"></span>${s.label}</span>
+        <span class="cat-bar-amt">${fmtMoney(s.amount)}<span class="cat-bar-share">${share.toFixed(0)}%</span></span>
+      </div>`;
+  }).join('');
+  const centerVal = income > 0 ? income : sum;
+  donutEl.innerHTML = `
+    <div class="cat-donut" style="background: conic-gradient(${stops})">
+      ${donutSlicePcts(dsegs)}
+      <div class="hole">
+        <div class="h-val">${fmtMoney(centerVal)}</div>
+        <div class="h-lbl">${income > 0 ? 'income' : 'allocated'}</div>
+      </div>
+    </div>
+    <div class="cat-legend">${legend}</div>`;
+  wireDonut(donutEl, dsegs);
+}
+
+function getWindowScale() {
+  const dim = daysInCurrentMonth();
+  const f = settings.filter;
+  if (f === 'today') return 1 / dim;
+  if (f === 'week')  return 7 / dim;
+  if (f === 'ytd') {
+    const { from, to } = getRange();
+    const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    return days / dim;
+  }
+  if (f === 'custom') {
+    if (settings.customMode === 'month') return 1;
+    if (settings.customMode === 'year')  return 12;
+    const { from, to } = getRange();
+    const days = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    return days / dim;
+  }
+  return 1;
+}
+
+function buildDonutSegments(items, total) {
+  let acc = 0;
+  return items.map(it => {
+    const start = total ? (acc / total) * 360 : 0;
+    acc += it.amount;
+    const end = total ? (acc / total) * 360 : 0;
+    return { label: it.label, color: it.color, amount: it.amount, start, end, share: total ? (it.amount / total) * 100 : 0 };
+  });
+}
+
+function donutSlicePcts(segs) {
+  return segs.map(s => {
+    if (s.share < 7) return '';
+    const md = (s.start + s.end) / 2;
+    const rad = md * Math.PI / 180;
+    const left = 50 + 38 * Math.sin(rad);
+    const top  = 50 - 38 * Math.cos(rad);
+    return `<span class="slice-pct" style="left:${left.toFixed(1)}%;top:${top.toFixed(1)}%">${s.share.toFixed(0)}%</span>`;
+  }).join('');
+}
+
+// Hover / tap a colored donut section to reveal its label, amount and share.
+function wireDonut(donutEl, segs) {
+  const ring = donutEl.querySelector('.cat-donut');
+  if (!ring) return;
+  let tip = ring.querySelector('.donut-tip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'donut-tip'; ring.appendChild(tip); }
+  const segAt = (e) => {
+    const r = ring.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    const dist = Math.hypot(dx, dy);
+    if (dist < r.width * 0.26 || dist > r.width * 0.5) return null;
+    let ang = Math.atan2(dx, -dy) * 180 / Math.PI;
+    if (ang < 0) ang += 360;
+    return segs.find(s => ang >= s.start && ang < s.end) || null;
+  };
+  const show = (e) => {
+    const s = segAt(e);
+    if (!s) { tip.classList.remove('show'); return; }
+    const r = ring.getBoundingClientRect();
+    tip.innerHTML = `<span class="dt-sw" style="background:${s.color}"></span>${escapeHtml(s.label)} \u00B7 ${fmtMoney(s.amount)} \u00B7 ${s.share.toFixed(0)}%`;
+    tip.style.left = (e.clientX - r.left) + 'px';
+    tip.style.top = (e.clientY - r.top) + 'px';
+    tip.classList.add('show');
+  };
+  ring.onpointermove = show;
+  ring.onpointerdown = show;
+  ring.onpointerleave = () => tip.classList.remove('show');
+}
+
+$('#donutViewToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  settings.donutView = btn.dataset.dview;
+  save(STORE_SETTINGS, settings);
+  renderCategoryBars();
+});
 
 $('#expToggle').addEventListener('click', () => {
   const card = $('#tableCard');
@@ -2662,7 +2882,7 @@ function escapeHtml(s) {
 }
 
 acctGrid.addEventListener('click', () => {
-  // Tapping an account card does nothing — edit/delete are swipe gestures now.
+  // Tapping an account card does nothing â€” edit/delete are swipe gestures now.
 });
 function deleteAccount(id) {
   const a = accounts.find(x => x.id === id);
@@ -2859,7 +3079,7 @@ function drawAccountsChart() {
     const netPoints = sortedDates.map(date => {
       let sum = 0;
       allSeries.forEach(s => {
-        // points are sorted ascending by date — grab the latest ≤ date
+        // points are sorted ascending by date â€” grab the latest â‰¤ date
         let latest = null;
         for (const p of s.points) {
           if (p.date <= date) latest = p; else break;
@@ -3196,9 +3416,8 @@ async function importBackup(text) {
   save(STORE_SETTINGS, settings);
   // Reapply UI state
   monthlyLimitEl.value = settings.monthlyLimit;
-  $$('.pill', filterEl).forEach(p => p.classList.toggle('active', p.dataset.filter === settings.filter));
-  customRangeEl.classList.toggle('hidden', settings.filter !== 'custom');
   if (settings.filter === 'custom') initCustomDefaults();
+  syncFilterUI();
   applyTheme();
   toast('Backup restored');
 }
@@ -3275,3 +3494,4 @@ gotoPage(1, false);
 </script>
 </body>
 </html>
+
