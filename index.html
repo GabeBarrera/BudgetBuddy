@@ -92,7 +92,7 @@
   .app {
     height: 100dvh;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
   }
   .topbar {
     display: flex;
@@ -412,6 +412,59 @@
   .chart-tooltip .tt-val {
     font-family: var(--mono); font-weight: 600; color: var(--ink);
   }
+
+  /* ---------- account graph focus (expanded) view ---------- */
+  .chart-expand-btn {
+    position: absolute; top: 0; right: 0; z-index: 6;
+    width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    color: var(--ink-3);
+    padding: 0;
+  }
+  .chart-expand-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+  .chart-expand-btn svg { width: 15px; height: 15px; }
+  .acct-focus {
+    position: fixed; inset: 0; z-index: 80;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: max(12px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) max(10px, env(safe-area-inset-bottom));
+  }
+  .acct-focus.open { display: flex; }
+  .af-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .af-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .af-range { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  .af-range.selecting { color: var(--accent); font-weight: 500; }
+  .af-close { margin-left: auto; flex-shrink: 0; }
+  .af-controls { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .af-legend { display: flex; gap: 8px; flex-wrap: wrap; }
+  .af-leg-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-elev);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .af-leg-item:hover { border-color: var(--line-strong); }
+  .af-leg-item .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .af-leg-item .leg-delta { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+  .af-leg-item.off { opacity: 0.4; }
+  .af-leg-item.off .leg-name { text-decoration: line-through; }
+  .af-leg-item.off .leg-delta { display: none; }
+  .af-canvas-wrap { position: relative; flex: 1; min-height: 0; }
+  #focusChart { display: block; touch-action: none; cursor: crosshair; }
+  .af-hint {
+    font-size: 11px; color: var(--ink-3);
+    font-family: var(--mono);
+    text-align: center;
+  }
+  @media (max-width: 640px) { .af-hint .desktop-only { display: none; } }
 
   .limit-controls {
     display: flex; align-items: center; gap: 14px;
@@ -1048,6 +1101,116 @@
     100% { opacity: 0; }
   }
 
+  /* ---------- section headers within pages ---------- */
+  .sect-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin: 26px 2px 12px;
+  }
+  .sect-head h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .sect-head .sub { color: var(--ink-3); font-size: 12px; font-family: var(--mono); }
+
+  /* ---------- progress bars ---------- */
+  .prog {
+    height: 8px; background: var(--bg-sunken);
+    border: 1px solid var(--line); border-radius: 5px; overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%; background: var(--good); border-radius: 4px;
+    transition: width .4s cubic-bezier(.22,.61,.36,1); min-width: 2px;
+  }
+  .prog-fill.over { background: var(--bad); }
+
+  /* ---------- goals & debts ---------- */
+  .goal-card, .debt-card { padding: 15px 18px; display: flex; flex-direction: column; gap: 9px; }
+  .gd-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .gd-name { font-weight: 600; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gd-amt { font-family: var(--mono); font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .gd-of { color: var(--ink-3); font-weight: 500; font-size: 12px; }
+  .gd-meta { color: var(--ink-3); font-size: 12px; }
+  .mini-empty { padding: 22px 18px; text-align: center; color: var(--ink-3); font-size: 13px; }
+  .debt-row2 { display: flex; gap: 22px; flex-wrap: wrap; }
+  .debt-stat .dl { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 500; }
+  .debt-stat .dv { font-family: var(--mono); font-weight: 600; font-size: 14px; margin-top: 2px; }
+  .strat-rows { display: flex; flex-direction: column; gap: 6px; }
+  .strat-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 8px 10px; background: var(--bg-sunken);
+    border: 1px solid var(--line); border-radius: 8px; font-size: 13px;
+  }
+  .strat-row .sr-name { font-weight: 600; }
+  .strat-row .sr-sub { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+  .strat-row .sr-val { font-family: var(--mono); white-space: nowrap; }
+
+  /* ---------- emergency fund ---------- */
+  .ef-card { padding: 16px 18px; }
+  .ef-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .ef-title { font-weight: 600; font-size: 14px; }
+  .ef-months { font-family: var(--mono); font-weight: 600; font-size: 18px; }
+  .ef-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-3); font-family: var(--mono); margin-top: 4px; }
+  .ef-note { color: var(--ink-3); font-size: 12px; margin-top: 8px; }
+
+  /* ---------- trends ---------- */
+  .trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .trend-cell .t-label { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; font-weight: 500; }
+  .trend-cell .t-val { font-family: var(--mono); font-weight: 600; font-size: 20px; margin-top: 3px; letter-spacing: -0.01em; }
+  .trend-cell .t-sub { font-size: 11.5px; color: var(--ink-3); font-family: var(--mono); margin-top: 2px; }
+  .trend-shifts { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .trend-shift { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; }
+  .trend-shift .ts-val { font-family: var(--mono); font-weight: 600; }
+
+  /* ---------- category budget caps ---------- */
+  .cat-legend-item { display: flex; flex-direction: column; gap: 4px; }
+  .cat-cap-line { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+  .cat-cap-prog { height: 5px; }
+  .cat-cap-txt { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); white-space: nowrap; }
+  .cat-cap-txt.over { color: var(--bad); font-weight: 600; }
+  .budget-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .budget-row { display: grid; grid-template-columns: 1fr 130px; gap: 10px; align-items: center; }
+
+  /* ---------- expense list tools ---------- */
+  .exp-tools { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .exp-tools .input { flex: 1; min-width: 150px; }
+  .exp-tools .select { width: auto; min-width: 160px; flex: 0 1 auto; }
+  .exp-head span[data-sort] { cursor: pointer; user-select: none; }
+  .exp-head span[data-sort]:hover { color: var(--ink); }
+  .exp-head .sort-ind { font-size: 8px; }
+
+  /* ---------- quick-add FAB ---------- */
+  .fab {
+    position: fixed; right: 18px; bottom: 74px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--ink); color: var(--bg); border: none;
+    box-shadow: var(--shadow-md);
+    display: grid; place-items: center;
+    z-index: 40;
+    transition: transform .12s;
+  }
+  .fab:active { transform: scale(0.94); }
+  .fab svg { width: 22px; height: 22px; }
+
+  /* ---------- backup reminder banner ---------- */
+  .banner {
+    margin: 0 20px 6px;
+    padding: 8px 12px;
+    border: 1px solid var(--warn);
+    background: oklch(0.72 0.14 70 / 0.10);
+    border-radius: 10px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px;
+  }
+  .banner[hidden] { display: none; }
+
+  /* toast with undo action */
+  .toast.show { pointer-events: auto; }
+  .toast-undo {
+    background: none; border: none; padding: 0;
+    color: oklch(0.80 0.14 150);
+    font-weight: 700; font-size: 12px;
+    letter-spacing: .05em; text-transform: uppercase;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+
   @media (max-width: 640px) {
     .add-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .add-form .btn-primary { grid-column: 1 / -1; }
@@ -1096,6 +1259,13 @@
     </div>
   </header>
 
+  <div class="banner" id="backupBanner" hidden>
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="backupBannerText" style="flex:1;"></span>
+    <button class="btn" id="bannerBackupBtn" style="padding:5px 10px; font-size:12px;">Back up</button>
+    <button class="btn btn-ghost" id="bannerLaterBtn" style="padding:5px 8px; font-size:12px;">Later</button>
+  </div>
+
   <section class="pager" id="pager">
     <span class="kbd-hint left">&larr; accounts</span>
     <span class="kbd-hint right">expenses &rarr;</span>
@@ -1130,7 +1300,54 @@
           <div class="canvas-wrap" id="acctCanvasWrap">
             <canvas id="acctChart" height="260"></canvas>
             <div class="chart-tooltip" id="acctTooltip"></div>
+            <button class="chart-expand-btn" id="acctExpandBtn" title="Expand to graph view" aria-label="Expand to graph-only view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
           </div>
+        </div>
+
+        <div class="card ef-card" id="efCard" style="margin-top: 18px;">
+          <div class="ef-top">
+            <span class="ef-title">Emergency fund</span>
+            <span class="ef-months" id="efMonths">&mdash;</span>
+          </div>
+          <div class="prog"><div class="prog-fill" id="efFill" style="width:0%"></div></div>
+          <div class="ef-scale"><span>0</span><span>3 mo</span><span>6+ mo</span></div>
+          <div class="ef-note" id="efNote"></div>
+        </div>
+
+        <div class="sect-head">
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <h2>Savings goals</h2>
+            <span class="sub" id="goalsSub"></span>
+          </div>
+          <button class="btn" id="addGoalBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add goal
+          </button>
+        </div>
+        <div class="acct-grid" id="goalGrid"></div>
+
+        <div class="sect-head">
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <h2>Debts</h2>
+            <span class="sub" id="debtsSub"></span>
+          </div>
+          <button class="btn" id="addDebtBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add debt
+          </button>
+        </div>
+        <div class="acct-grid" id="debtGrid"></div>
+        <div class="card" id="debtStrategy" hidden style="padding:16px 18px; margin-bottom:18px;">
+          <div class="ef-top" style="margin-bottom:10px;">
+            <span class="ef-title">Payoff strategy</span>
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              <label for="debtExtra" style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.04em; font-weight:500;">Extra $/mo</label>
+              <input type="number" id="debtExtra" class="input mono" min="0" step="25" style="width:110px;" placeholder="0" />
+            </span>
+          </div>
+          <div id="strategyBody"></div>
         </div>
       </div>
 
@@ -1206,7 +1423,10 @@
               <span class="limit-swatch"></span> limit threshold
             </span>
           </div>
-          <canvas id="expChart" height="260"></canvas>
+          <div class="canvas-wrap" id="expCanvasWrap">
+            <canvas id="expChart" height="260"></canvas>
+            <div class="chart-tooltip" id="expTooltip"></div>
+          </div>
         </div>
 
         <div class="limit-controls">
@@ -1235,6 +1455,14 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Add new modifier
           </button>
+        </div>
+
+        <div class="card" id="trendCard" style="margin-top: 18px; padding: 20px 22px;">
+          <div class="chart-meta" style="margin-bottom: 12px;">
+            <span>month-over-month</span>
+            <span id="trendLabel"></span>
+          </div>
+          <div id="trendBody"></div>
         </div>
       </div>
 
@@ -1309,6 +1537,7 @@
               <button class="pill" data-dview="category">Category</button>
               <button class="pill" data-dview="budget">Budget</button>
             </div>
+            <button class="btn btn-ghost" id="budgetsBtn" style="font-size:12px;">Set budgets</button>
           </div>
           <div class="cat-donut-wrap" id="catDonut"></div>
         </div>
@@ -1324,7 +1553,7 @@
           </div>
           <div class="field">
             <label for="newVendor">Vendor</label>
-            <input type="text" id="newVendor" class="input" placeholder="e.g. Whole Foods" />
+            <input type="text" id="newVendor" class="input" list="vendorList" placeholder="e.g. Whole Foods" />
           </div>
           <div class="field">
             <label for="newAmount">Amount ($)</label>
@@ -1336,6 +1565,11 @@
           </button>
         </form>
 
+        <div class="exp-tools">
+          <input type="search" id="expSearch" class="input" placeholder="Search vendor or category&hellip;" />
+          <select id="expCatFilter" class="select"></select>
+        </div>
+
         <button class="exp-toggle" id="expToggle" aria-expanded="false" aria-controls="tableCard">
           <span class="et-left">
             Expenses
@@ -1346,10 +1580,10 @@
 
         <div class="card table-card" id="tableCard" hidden>
           <div class="exp-head">
-            <span>Date</span>
-            <span>Category</span>
-            <span>Vendor</span>
-            <span class="ta-right">Amount</span>
+            <span data-sort="date">Date <span class="sort-ind" data-ind="date"></span></span>
+            <span data-sort="category">Category <span class="sort-ind" data-ind="category"></span></span>
+            <span data-sort="vendor">Vendor <span class="sort-ind" data-ind="vendor"></span></span>
+            <span class="ta-right" data-sort="amount"><span class="sort-ind" data-ind="amount"></span> Amount</span>
           </div>
           <div class="exp-list" id="tbody"></div>
           <div class="empty" id="tableEmpty" style="display:none;">
@@ -1535,7 +1769,8 @@
               <ul>
                 <li>All expense log entries</li>
                 <li>All accounts and their history</li>
-                <li>Monthly limit, modifiers, and filters</li>
+                <li>All savings goals and debts</li>
+                <li>Monthly limit, modifiers, budgets, and filters</li>
                 <li>Theme preference</li>
               </ul>
             </div>
@@ -1601,7 +1836,7 @@
       </div>
       <div class="field">
         <label for="editVendor">Vendor</label>
-        <input type="text" id="editVendor" class="input" placeholder="e.g. Whole Foods" />
+        <input type="text" id="editVendor" class="input" list="vendorList" placeholder="e.g. Whole Foods" />
       </div>
       <div class="field">
         <label for="editAmount">Amount ($)</label>
@@ -1615,7 +1850,183 @@
   </div>
 </div>
 
+<!-- ============== MODAL: savings goal ============== -->
+<div class="modal-backdrop" id="goalModal">
+  <div class="modal">
+    <h3 id="goalModalTitle">Add savings goal</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="goalName">Name</label>
+        <input type="text" id="goalName" class="input" placeholder="e.g. New car fund" />
+      </div>
+      <div class="field">
+        <label for="goalTarget">Target amount ($)</label>
+        <input type="number" id="goalTarget" class="input mono" min="1" step="50" placeholder="0.00" />
+      </div>
+      <div class="field">
+        <label for="goalSaved">Saved so far ($)</label>
+        <input type="number" id="goalSaved" class="input mono" min="0" step="10" placeholder="0.00" />
+      </div>
+      <div class="field">
+        <label for="goalDate">Target date (optional)</label>
+        <input type="date" id="goalDate" class="input mono" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-danger" id="goalDeleteBtn" style="display:none;">Delete</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn btn-ghost" id="goalCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="goalSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: debt ============== -->
+<div class="modal-backdrop" id="debtModal">
+  <div class="modal">
+    <h3 id="debtModalTitle">Add debt</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="debtName">Name</label>
+        <input type="text" id="debtName" class="input" placeholder="e.g. Student loan" />
+      </div>
+      <div class="field">
+        <label for="debtBalance">Current balance ($)</label>
+        <input type="number" id="debtBalance" class="input mono" min="0.01" step="100" placeholder="0.00" />
+      </div>
+      <div class="field">
+        <label for="debtApr">APR (%)</label>
+        <input type="number" id="debtApr" class="input mono" min="0" step="0.05" placeholder="e.g. 6.5" />
+      </div>
+      <div class="field">
+        <label for="debtMinPay">Monthly payment ($)</label>
+        <input type="number" id="debtMinPay" class="input mono" min="0" step="25" placeholder="0.00" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-danger" id="debtDeleteBtn" style="display:none;">Delete</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn btn-ghost" id="debtCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="debtSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: category budgets ============== -->
+<div class="modal-backdrop" id="budgetModal">
+  <div class="modal">
+    <h3>Category budgets</h3>
+    <p style="color: var(--ink-3); font-size:12.5px; margin: -10px 0 16px;">Monthly caps per category. Leave blank for no cap &mdash; caps scale with the active time filter.</p>
+    <div class="budget-list" id="budgetList"></div>
+    <div class="actions">
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn btn-ghost" id="budgetCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="budgetSaveBtn">Save budgets</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: quick add expense ============== -->
+<div class="modal-backdrop" id="quickModal">
+  <div class="modal">
+    <h3>Quick add expense</h3>
+    <form id="qaForm">
+      <div class="form-grid">
+        <div class="field">
+          <label for="qaAmount">Amount ($)</label>
+          <input type="number" id="qaAmount" class="input mono" min="0.01" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="field">
+          <label for="qaVendor">Vendor</label>
+          <input type="text" id="qaVendor" class="input" list="vendorList" placeholder="e.g. Whole Foods" />
+        </div>
+        <div class="field">
+          <label for="qaCategory">Category</label>
+          <select id="qaCategory" class="select"></select>
+        </div>
+        <div class="field">
+          <label for="qaDate">Date</label>
+          <input type="date" id="qaDate" class="input mono" required />
+        </div>
+      </div>
+      <div class="actions">
+        <div style="display:flex; gap:8px; margin-left:auto;">
+          <button type="button" class="btn btn-ghost" id="qaCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add expense</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<button class="fab" id="fab" title="Quick add expense" aria-label="Quick add expense">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+<datalist id="vendorList"></datalist>
+
 <div class="toast" id="toast"></div>
+
+<!-- ============== ACCOUNT GRAPH FOCUS (EXPANDED) VIEW ============== -->
+<div class="acct-focus" id="acctFocus" role="dialog" aria-label="Account graph view">
+  <div class="af-head">
+    <h2>Account value over time</h2>
+    <span class="af-range" id="focusRangeLabel"></span>
+    <button class="icon-btn af-close" id="focusCloseBtn" title="Exit graph view" aria-label="Exit graph view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+  </div>
+  <div class="af-controls">
+    <div class="filters" id="focusFilters">
+      <button class="pill" data-filter="today"><span class="f-full">Today</span><span class="f-short">D</span></button>
+      <button class="pill" data-filter="week"><span class="f-full">This week</span><span class="f-short">W</span></button>
+      <button class="pill" data-filter="month"><span class="f-full">This month</span><span class="f-short">M</span></button>
+      <button class="pill" data-filter="ytd">YTD</button>
+      <button class="pill" data-filter="custom"><span class="f-full">Custom</span><span class="f-short">More</span></button>
+    </div>
+  </div>
+  <div class="custom-range hidden" id="focusCustomRange" style="padding-top: 0;">
+    <div class="filters" id="focusCustomMode" style="margin-bottom: 4px;">
+      <button class="pill active" data-mode="range">Date range</button>
+      <button class="pill" data-mode="month">Single month</button>
+      <button class="pill" data-mode="year">Single year</button>
+    </div>
+    <div class="custom-pane" data-pane="range">
+      <div class="field" style="flex:1; max-width:220px;">
+        <label>From</label>
+        <input type="date" id="focusCustomFrom" class="input mono" />
+      </div>
+      <div class="field" style="flex:1; max-width:220px;">
+        <label>To</label>
+        <input type="date" id="focusCustomTo" class="input mono" />
+      </div>
+    </div>
+    <div class="custom-pane" data-pane="month" style="display:none;">
+      <div class="field" style="flex:1; max-width:220px;">
+        <label>Month</label>
+        <select id="focusCustomMonth" class="select"></select>
+      </div>
+      <div class="field" style="flex:1; max-width:220px;">
+        <label>Year</label>
+        <select id="focusCustomYearM" class="select"></select>
+      </div>
+    </div>
+    <div class="custom-pane" data-pane="year" style="display:none;">
+      <div class="field" style="flex:1; max-width: 220px;">
+        <label>Year</label>
+        <select id="focusCustomYear" class="select"></select>
+      </div>
+    </div>
+  </div>
+  <div class="af-legend" id="focusLegend"></div>
+  <div class="af-canvas-wrap" id="focusCanvasWrap">
+    <canvas id="focusChart"></canvas>
+    <div class="chart-tooltip" id="focusTooltip"></div>
+  </div>
+  <div class="af-hint">scroll or pinch to zoom &middot; tap a legend pill to hide/show<span class="desktop-only"> &middot; drag to pan &middot; Ctrl+click two points to measure (click a marker to clear)</span></div>
+</div>
 
 <script>
 /* ============================================================
@@ -1624,6 +2035,8 @@
 const STORE_EXP = 'budget_expenses';
 const STORE_ACCT = 'budget_accounts';
 const STORE_SETTINGS = 'budget_settings';
+const STORE_GOALS = 'budget_goals';
+const STORE_DEBTS = 'budget_debts';
 
 const CATEGORIES = [
   { id: 'food',          label: 'Food',           color: 'oklch(0.65 0.16 35)' },
@@ -1708,6 +2121,11 @@ if (!settings.demoWiped) {
 }
 if (!expenses) { expenses = []; save(STORE_EXP, expenses); }
 if (!accounts) { accounts = []; save(STORE_ACCT, accounts); }
+let goals = load(STORE_GOALS, []);
+let debts = load(STORE_DEBTS, []);
+if (!Array.isArray(goals)) goals = [];
+if (!Array.isArray(debts)) debts = [];
+if (!settings.catBudgets || typeof settings.catBudgets !== 'object') settings.catBudgets = {};
 
 /* ============================================================
    PAGER (swipe + arrows)
@@ -2178,6 +2596,7 @@ function renderGraph() {
    EXPENSE CHART (canvas)
    ============================================================ */
 const expCanvas = $('#expChart');
+let expChartState = null;
 function drawExpenseChart() {
   const c = expCanvas;
   const css = getComputedStyle(document.documentElement);
@@ -2245,7 +2664,21 @@ function drawExpenseChart() {
   }
 
   const total = points.total;
-  const maxY = Math.max(limit * 1.1, total * 1.05, 10);
+
+  // ---- forecast: project end-of-range spend from the current daily pace ----
+  let forecast = null;
+  if (points.type === 'daily' && points.series.length > 1 && total > 0) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const idxToday = Math.round((today - from) / 86400000);
+    if (idxToday >= 0 && idxToday < points.series.length - 1) {
+      const pace = total / (idxToday + 1);
+      forecast = {
+        fromIdx: idxToday,
+        value: total + pace * (points.series.length - 1 - idxToday),
+      };
+    }
+  }
+  const maxY = Math.max(limit * 1.1, total * 1.05, forecast ? forecast.value * 1.05 : 0, 10);
 
   // Y gridlines
   const ticks = niceTicks(0, maxY, 4);
@@ -2307,6 +2740,7 @@ function drawExpenseChart() {
   const fill = over ? badSoft : goodSoft;
 
   if (points.series.length === 0) {
+    expChartState = null;
     ctx.fillStyle = ink3;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = '13px ' + css.getPropertyValue('--sans');
@@ -2351,6 +2785,28 @@ function drawExpenseChart() {
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.globalAlpha = 1;
+
+  // Forecast projection (dashed)
+  if (forecast) {
+    const fx0 = xAt(forecast.fromIdx), fy0 = yAt(points.series[forecast.fromIdx].y);
+    const fx1 = xAt(points.series.length - 1), fy1 = yAt(forecast.value);
+    const overProj = limit > 0 && forecast.value > limit;
+    const projCol = overProj ? badCol : ink3;
+    ctx.save();
+    ctx.setLineDash([3, 5]);
+    ctx.strokeStyle = projCol;
+    ctx.lineWidth = 1.75;
+    ctx.beginPath(); ctx.moveTo(fx0, fy0); ctx.lineTo(fx1, fy1); ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(fx1, fy1, 3, 0, Math.PI * 2); ctx.fillStyle = projCol; ctx.fill();
+    ctx.font = '11px ' + css.getPropertyValue('--mono');
+    ctx.fillStyle = projCol;
+    ctx.textAlign = 'right';
+    if (fy1 > pad.t + 20) { ctx.textBaseline = 'bottom'; ctx.fillText('proj ' + fmtMoneyShort(forecast.value), fx1 - 6, fy1 - 6); }
+    else { ctx.textBaseline = 'top'; ctx.fillText('proj ' + fmtMoneyShort(forecast.value), fx1 - 6, fy1 + 8); }
+  }
+
+  expChartState = { pad, W, H, series: points.series, type: points.type, maxY };
 }
 
 function niceTicks(min, max, count) {
@@ -2403,11 +2859,47 @@ const SWIPE_HINT = `
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
     </span>
   </div>`;
+let expSort = { key: 'date', dir: -1 };
+let expSearch = '';
+let expCatFilter = 'all';
 function renderTable() {
   const list = filteredExpenses();
-  const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
-  $('#tableSubtitle').textContent = `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
-  $('#tableEmpty').style.display = list.length === 0 ? 'block' : 'none';
+  let shown = list;
+  if (expCatFilter !== 'all') shown = shown.filter(x => x.category === expCatFilter);
+  if (expSearch) {
+    const q = expSearch.toLowerCase();
+    shown = shown.filter(x => {
+      const cat = CATEGORIES.find(c => c.id === x.category);
+      return (x.vendor || '').toLowerCase().includes(q) || (cat ? cat.label : '').toLowerCase().includes(q);
+    });
+  }
+  const { key, dir } = expSort;
+  const sorted = [...shown].sort((a, b) => {
+    let r = 0;
+    if (key === 'amount') r = (+a.amount) - (+b.amount);
+    else if (key === 'vendor') r = (a.vendor || '').localeCompare(b.vendor || '');
+    else if (key === 'category') {
+      const la = (CATEGORIES.find(c => c.id === a.category) || {}).label || '';
+      const lb = (CATEGORIES.find(c => c.id === b.category) || {}).label || '';
+      r = la.localeCompare(lb);
+    }
+    if (r === 0) r = a.date.localeCompare(b.date);
+    return r * dir;
+  });
+  const isFiltered = expCatFilter !== 'all' || !!expSearch;
+  $('#tableSubtitle').textContent = isFiltered
+    ? `${sorted.length} of ${list.length} entries`
+    : `${list.length} ${list.length === 1 ? 'entry' : 'entries'}`;
+  const emptyEl = $('#tableEmpty');
+  emptyEl.style.display = sorted.length === 0 ? 'block' : 'none';
+  if (sorted.length === 0) {
+    emptyEl.innerHTML = isFiltered
+      ? '<div class="big">No matches</div><div>Try a different search or category filter.</div>'
+      : '<div class="big">No expenses yet</div><div>Add one above to see it appear on the graph.</div>';
+  }
+  $$('#tableCard .exp-head .sort-ind').forEach(ind => {
+    ind.textContent = ind.dataset.ind === key ? (dir === 1 ? '\u25B2' : '\u25BC') : '';
+  });
   tbody.innerHTML = sorted.map(x => {
     const cat = CATEGORIES.find(c => c.id === x.category) || CATEGORIES.at(-1);
     const vendor = x.vendor ? escapeHtml(x.vendor) : '<span style="color: var(--ink-3);">&mdash;</span>';
@@ -2465,12 +2957,28 @@ function renderCategoryBars() {
   // ---- Donut ----
   const dsegs = buildDonutSegments(cats, total);
   const stops = dsegs.map(s => `${s.color} ${s.start.toFixed(2)}deg ${s.end.toFixed(2)}deg`).join(', ');
+  const capScale = getWindowScale();
   const legend = cats.map(c => {
     const share = total ? (c.amount / total) * 100 : 0;
+    const capM = +((settings.catBudgets || {})[c.id]) || 0;
+    const cap = capM * capScale;
+    let capHtml = '';
+    if (cap > 0) {
+      const p = (c.amount / cap) * 100;
+      const over = c.amount > cap + 0.005;
+      capHtml = `
+        <div class="cat-cap-line">
+          <div class="prog cat-cap-prog"><div class="prog-fill${over ? ' over' : ''}" style="width:${Math.min(100, p).toFixed(1)}%;${over ? '' : `background:${c.color};`}"></div></div>
+          <span class="cat-cap-txt${over ? ' over' : ''}">${over ? fmtMoney(c.amount - cap) + ' over' : p.toFixed(0) + '% of'} ${fmtMoney(cap)}</span>
+        </div>`;
+    }
     return `
-      <div class="cat-legend-row">
-        <span class="cat-bar-label"><span class="swatch" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>
-        <span class="cat-bar-amt">${fmtMoney(c.amount)}<span class="cat-bar-share">${share.toFixed(0)}%</span></span>
+      <div class="cat-legend-item">
+        <div class="cat-legend-row">
+          <span class="cat-bar-label"><span class="swatch" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>
+          <span class="cat-bar-amt">${fmtMoney(c.amount)}<span class="cat-bar-share">${share.toFixed(0)}%</span></span>
+        </div>
+        ${capHtml}
       </div>`;
   }).join('');
   donutEl.innerHTML = `
@@ -2627,14 +3135,16 @@ $('#expToggle').addEventListener('click', () => {
   btn.setAttribute('aria-expanded', String(!open));
 });
 function deleteExpense(id) {
-  const x = expenses.find(x => x.id === id);
-  if (!x) return;
-  if (confirm(`Delete ${fmtMoney(x.amount)} expense on ${fmtDate(x.date)}?`)) {
-    expenses = expenses.filter(e => e.id !== id);
+  const idx = expenses.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const [removed] = expenses.splice(idx, 1);
+  save(STORE_EXP, expenses);
+  redrawAll();
+  toast(`Deleted ${fmtMoney(removed.amount)} expense`, () => {
+    expenses.splice(Math.min(idx, expenses.length), 0, removed);
     save(STORE_EXP, expenses);
     redrawAll();
-    toast('Expense deleted');
-  }
+  });
 }
 
 $('#addForm').addEventListener('submit', (e) => {
@@ -2885,14 +3395,16 @@ acctGrid.addEventListener('click', () => {
   // Tapping an account card does nothing â€” edit/delete are swipe gestures now.
 });
 function deleteAccount(id) {
-  const a = accounts.find(x => x.id === id);
-  if (!a) return;
-  if (confirm(`Delete account "${a.name}"? Its data will be lost.`)) {
-    accounts = accounts.filter(x => x.id !== id);
+  const idx = accounts.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const [removed] = accounts.splice(idx, 1);
+  save(STORE_ACCT, accounts);
+  redrawAll();
+  toast(`Deleted account "${removed.name}"`, () => {
+    accounts.splice(Math.min(idx, accounts.length), 0, removed);
     save(STORE_ACCT, accounts);
-    renderAccounts();
-    toast('Account deleted');
-  }
+    redrawAll();
+  });
 }
 
 /* ---------- account modal ---------- */
@@ -2922,15 +3434,9 @@ $('#acctCancelBtn').addEventListener('click', () => $('#acctModal').classList.re
 $('#acctModal').addEventListener('click', (e) => { if (e.target === $('#acctModal')) $('#acctModal').classList.remove('open'); });
 $('#acctDeleteBtn').addEventListener('click', () => {
   if (!editingAcctId) return;
-  const a = accounts.find(x => x.id === editingAcctId);
-  if (!a) return;
-  if (confirm(`Delete account "${a.name}"?`)) {
-    accounts = accounts.filter(x => x.id !== editingAcctId);
-    save(STORE_ACCT, accounts);
-    $('#acctModal').classList.remove('open');
-    renderAccounts();
-    toast('Account deleted');
-  }
+  const id = editingAcctId;
+  $('#acctModal').classList.remove('open');
+  deleteAccount(id);
 });
 $('#acctSaveBtn').addEventListener('click', () => {
   const name = $('#acctName').value.trim();
@@ -3044,26 +3550,8 @@ function renderAcctLegend() {
 
 let acctChartState = null;
 
-function drawAccountsChart() {
-  const c = $('#acctChart');
+function buildAcctSeriesAll() {
   const css = getComputedStyle(document.documentElement);
-  const ink3 = css.getPropertyValue('--ink-3').trim();
-  const lineCol = css.getPropertyValue('--line').trim();
-
-  const dpr = window.devicePixelRatio || 1;
-  const wCss = c.clientWidth;
-  const hCss = 260;
-  c.width = wCss * dpr;
-  c.height = hCss * dpr;
-  c.style.height = hCss + 'px';
-  const ctx = c.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, wCss, hCss);
-
-  const pad = { l: 60, r: 18, t: 18, b: 30 };
-  const W = wCss - pad.l - pad.r;
-  const H = hCss - pad.t - pad.b;
-
   const allSeries = accounts.filter(a => (a.series || []).length).map(a => ({
     id: a.id, name: a.name, color: a.color,
     points: a.series.slice().sort((a,b) => a.date.localeCompare(b.date)),
@@ -3097,6 +3585,30 @@ function drawAccountsChart() {
       isNet: true,
     });
   }
+  return allSeries;
+}
+
+function drawAccountsChart() {
+  const c = $('#acctChart');
+  const css = getComputedStyle(document.documentElement);
+  const ink3 = css.getPropertyValue('--ink-3').trim();
+  const lineCol = css.getPropertyValue('--line').trim();
+
+  const dpr = window.devicePixelRatio || 1;
+  const wCss = c.clientWidth;
+  const hCss = 260;
+  c.width = wCss * dpr;
+  c.height = hCss * dpr;
+  c.style.height = hCss + 'px';
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, wCss, hCss);
+
+  const pad = { l: 60, r: 18, t: 18, b: 30 };
+  const W = wCss - pad.l - pad.r;
+  const H = hCss - pad.t - pad.b;
+
+  const allSeries = buildAcctSeriesAll();
 
   if (allSeries.length === 0) {
     acctChartState = null;
@@ -3297,6 +3809,679 @@ $('#acctChart').addEventListener('mousemove', onAcctHover);
 $('#acctChart').addEventListener('mouseleave', hideAcctTooltip);
 
 /* ============================================================
+   ACCOUNT GRAPH FOCUS (EXPANDED) VIEW
+   ============================================================ */
+// Session-scoped date-filter state for the focus view (mirrors the overview
+// filter options but is independent of it). Seeded from settings on first open.
+const focusFS = { filter: null, customMode: 'range', customFrom: '', customTo: '', customMonth: null, customYearM: null, customYear: null };
+const focusView = {
+  open: false,
+  series: [],
+  hidden: new Set(),     // hidden series ids (accounts or '__net__')
+  t0: 0, t1: 0,          // visible time domain (ms)
+  markA: null, markB: null, // ctrl+click range markers (ms timestamps)
+  touchRange: null,      // [tA, tB] while two fingers are held
+  hoverT: null,
+  geom: null,            // { pad, W, H } from last draw
+};
+
+function buildFocusSeries() {
+  return buildAcctSeriesAll().map(s => ({
+    ...s,
+    pts: s.points.map(p => ({ t: new Date(p.date + 'T12:00:00').getTime(), v: +p.value || 0, date: p.date })),
+  }));
+}
+
+function focusVisible() {
+  return focusView.series.filter(s => !focusView.hidden.has(s.id));
+}
+
+/* ---------- date filter (same options/behavior as the overview filter) ---------- */
+function getFocusRange() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const f = focusFS.filter;
+  let from, to = new Date(now); to.setHours(23,59,59,999);
+  if (f === 'today') {
+    from = new Date(now);
+  } else if (f === 'week') {
+    from = new Date(now);
+    from.setDate(from.getDate() - from.getDay());
+    to = new Date(from);
+    to.setDate(to.getDate() + 6);
+    to.setHours(23,59,59,999);
+  } else if (f === 'ytd') {
+    from = new Date(now.getFullYear(), 0, 1);
+  } else if (f === 'custom') {
+    if (focusFS.customMode === 'month') {
+      const y = +focusFS.customYearM, m = +focusFS.customMonth;
+      from = new Date(y, m, 1);
+      to = new Date(y, m + 1, 0); to.setHours(23,59,59,999);
+    } else if (focusFS.customMode === 'year') {
+      const y = +focusFS.customYear;
+      from = new Date(y, 0, 1);
+      to = new Date(y, 11, 31); to.setHours(23,59,59,999);
+    } else {
+      from = focusFS.customFrom ? new Date(focusFS.customFrom + 'T00:00:00') : new Date(now);
+      to   = focusFS.customTo   ? new Date(focusFS.customTo   + 'T23:59:59') : new Date(now);
+      if (from > to) [from, to] = [to, from];
+    }
+  } else { // this month
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    to = new Date(now.getFullYear(), now.getMonth() + 1, 0); to.setHours(23,59,59,999);
+  }
+  return { from, to };
+}
+
+function focusRangeText() {
+  const { from, to } = getFocusRange();
+  const f = focusFS.filter;
+  if (f === 'today') return fmtDate(from);
+  if (f === 'custom' && focusFS.customMode === 'month') return `${MONTH_NAMES[+focusFS.customMonth]} ${focusFS.customYearM}`;
+  if (f === 'custom' && focusFS.customMode === 'year') return String(focusFS.customYear);
+  if (f === 'ytd') return `Jan 1 \u2013 ${fmtDateShort(to)} (YTD)`;
+  return `${fmtDateShort(from)} \u2013 ${fmtDateShort(to)}`;
+}
+
+function syncFocusFilterUI() {
+  $$('.pill', $('#focusFilters')).forEach(p => p.classList.toggle('active', p.dataset.filter === focusFS.filter));
+  const cr = $('#focusCustomRange');
+  cr.classList.toggle('hidden', focusFS.filter !== 'custom');
+  $$('.custom-pane', cr).forEach(p => p.style.display = (p.dataset.pane === focusFS.customMode) ? 'flex' : 'none');
+  $$('.pill', $('#focusCustomMode')).forEach(p => p.classList.toggle('active', p.dataset.mode === focusFS.customMode));
+  if (focusFS.customFrom) $('#focusCustomFrom').value = focusFS.customFrom;
+  if (focusFS.customTo)   $('#focusCustomTo').value   = focusFS.customTo;
+  buildMonthOptions($('#focusCustomMonth'), focusFS.customMonth);
+  buildYearOptions($('#focusCustomYearM'), focusFS.customYearM);
+  buildYearOptions($('#focusCustomYear'), focusFS.customYear);
+}
+
+function initFocusCustomDefaults() {
+  if (!focusFS.customFrom) {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    focusFS.customFrom = toISO(d);
+    focusFS.customTo = todayISO();
+  }
+  if (focusFS.customYear == null)  focusFS.customYear  = CURRENT_YEAR - 1;
+  if (focusFS.customYearM == null) focusFS.customYearM = CURRENT_YEAR;
+  if (focusFS.customMonth == null) focusFS.customMonth = new Date().getMonth();
+}
+
+function applyFocusFilter() {
+  focusView.markA = focusView.markB = null;
+  focusView.touchRange = null;
+  syncFocusFilterUI();
+  focusFit();
+  renderFocusLegend();
+  updateFocusRangeLabel();
+  drawFocusChart();
+}
+
+$('#focusFilters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill'); if (!btn) return;
+  focusFS.filter = btn.dataset.filter;
+  if (focusFS.filter === 'custom') initFocusCustomDefaults();
+  applyFocusFilter();
+});
+$('#focusCustomMode').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill'); if (!btn) return;
+  focusFS.customMode = btn.dataset.mode;
+  applyFocusFilter();
+});
+$('#focusCustomFrom').addEventListener('change', (e) => { focusFS.customFrom = e.target.value; applyFocusFilter(); });
+$('#focusCustomTo').addEventListener('change', (e) => { focusFS.customTo = e.target.value; applyFocusFilter(); });
+$('#focusCustomMonth').addEventListener('change', (e) => { focusFS.customMonth = +e.target.value; applyFocusFilter(); });
+$('#focusCustomYearM').addEventListener('change', (e) => { focusFS.customYearM = +e.target.value; applyFocusFilter(); });
+$('#focusCustomYear').addEventListener('change', (e) => { focusFS.customYear = +e.target.value; applyFocusFilter(); });
+
+/* ---------- domain / values ---------- */
+function valueAtT(pts, t) {
+  if (!pts.length) return null;
+  if (t <= pts[0].t) return pts[0].v;
+  if (t >= pts.at(-1).t) return pts.at(-1).v;
+  for (let i = 1; i < pts.length; i++) {
+    if (pts[i].t >= t) {
+      const a = pts[i-1], b = pts[i];
+      const f = (t - a.t) / ((b.t - a.t) || 1);
+      return a.v + (b.v - a.v) * f;
+    }
+  }
+  return pts.at(-1).v;
+}
+
+function focusDataExtent() {
+  const src = focusVisible().length ? focusVisible() : focusView.series;
+  let dMin = Infinity, dMax = -Infinity;
+  src.forEach(s => {
+    if (!s.pts.length) return;
+    if (s.pts[0].t < dMin) dMin = s.pts[0].t;
+    if (s.pts.at(-1).t > dMax) dMax = s.pts.at(-1).t;
+  });
+  if (!isFinite(dMin)) { dMin = Date.now() - 30 * 864e5; dMax = Date.now(); }
+  if (dMax - dMin < 864e5) dMax = dMin + 864e5;
+  return { dMin, dMax };
+}
+
+function setFocusDomain(a, b) {
+  const { dMin, dMax } = focusDataExtent();
+  let span = b - a;
+  const MIN_SPAN = 6 * 36e5;                       // 6 hours
+  const MAX_SPAN = (dMax - dMin) * 1.4;
+  if (span < MIN_SPAN) { const c = (a + b) / 2; a = c - MIN_SPAN / 2; b = c + MIN_SPAN / 2; span = MIN_SPAN; }
+  if (span > MAX_SPAN) { const c = (a + b) / 2; a = c - MAX_SPAN / 2; b = c + MAX_SPAN / 2; span = MAX_SPAN; }
+  const lo = dMin - span * 0.15, hi = dMax + span * 0.15;
+  if (a < lo) { a = lo; b = a + span; }
+  if (b > hi) { b = hi; a = b - span; if (a < lo) a = lo; }
+  focusView.t0 = a; focusView.t1 = b;
+}
+
+// Best-fit: fit the view to the active date filter, clamped to where the
+// visible series actually have data. Falls back to full data extent.
+function focusFit() {
+  const { dMin, dMax } = focusDataExtent();
+  const { from, to } = getFocusRange();
+  let t0 = Math.max(from.getTime(), dMin);
+  let t1 = Math.min(to.getTime(), dMax);
+  if (!(t1 > t0)) { t0 = dMin; t1 = dMax; }
+  if (t1 - t0 < 6 * 36e5) { t0 -= 43200000; t1 += 43200000; }
+  focusView.t0 = t0; focusView.t1 = t1;
+}
+
+/* ---------- range selection + stats ---------- */
+function focusSelection() {
+  if (focusView.touchRange) {
+    const [a, b] = focusView.touchRange;
+    return a <= b ? [a, b] : [b, a];
+  }
+  if (focusView.markA != null && focusView.markB != null) {
+    const a = focusView.markA, b = focusView.markB;
+    return a <= b ? [a, b] : [b, a];
+  }
+  return null;
+}
+
+function focusStatsRange() {
+  const sel = focusSelection();
+  if (sel) return sel;
+  const { from, to } = getFocusRange();
+  return [from.getTime(), to.getTime()];
+}
+
+function updateFocusRangeLabel() {
+  const el = $('#focusRangeLabel');
+  const sel = focusSelection();
+  if (sel) {
+    el.textContent = `${fmtDate(new Date(sel[0]))} \u2013 ${fmtDate(new Date(sel[1]))} \u00B7 selection`;
+    el.classList.add('selecting');
+  } else {
+    el.textContent = focusRangeText();
+    el.classList.remove('selecting');
+  }
+}
+
+function renderFocusLegend() {
+  const [ra, rb] = focusStatsRange();
+  $('#focusLegend').innerHTML = focusView.series.map(s => {
+    const off = focusView.hidden.has(s.id);
+    const v0 = valueAtT(s.pts, ra), v1 = valueAtT(s.pts, rb);
+    let deltaTxt = '\u2014', col = 'var(--ink-3)';
+    if (v0 != null && v1 != null) {
+      const d = v1 - v0;
+      const pct = Math.abs(v0) > 1e-9 ? (d / Math.abs(v0)) * 100 : null;
+      deltaTxt = `${fmtMoney(d, true)} (${pct == null ? '\u2014' : (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%'})`;
+      col = d > 0 ? 'var(--good)' : (d < 0 ? 'var(--bad)' : 'var(--ink-3)');
+    }
+    return `
+      <button class="af-leg-item${off ? ' off' : ''}" data-sid="${escapeHtml(s.id)}" title="${off ? 'Show' : 'Hide'} ${escapeHtml(s.name)}">
+        <span class="swatch" style="background:${s.color}"></span>
+        <span class="leg-name"${s.isNet ? ' style="font-weight:600; color:var(--ink);"' : ''}>${escapeHtml(s.name)}</span>
+        <span class="leg-delta" style="color:${col}">${deltaTxt}</span>
+      </button>`;
+  }).join('');
+}
+
+$('#focusLegend').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-sid]'); if (!btn) return;
+  const id = btn.dataset.sid;
+  if (focusView.hidden.has(id)) focusView.hidden.delete(id);
+  else focusView.hidden.add(id);
+  // Best-fit zoom around whatever is now visible
+  focusFit();
+  renderFocusLegend();
+  drawFocusChart();
+});
+
+/* ---------- drawing ---------- */
+function drawFocusChart() {
+  if (!focusView.open) return;
+  const c = $('#focusChart');
+  const wrap = $('#focusCanvasWrap');
+  const css = getComputedStyle(document.documentElement);
+  const ink3 = css.getPropertyValue('--ink-3').trim();
+  const lineCol = css.getPropertyValue('--line').trim();
+  const accent = css.getPropertyValue('--accent').trim();
+
+  const dpr = window.devicePixelRatio || 1;
+  const wCss = wrap.clientWidth, hCss = wrap.clientHeight;
+  if (wCss < 40 || hCss < 40) return;
+  c.width = wCss * dpr; c.height = hCss * dpr;
+  c.style.width = wCss + 'px'; c.style.height = hCss + 'px';
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, wCss, hCss);
+
+  const pad = { l: 64, r: 20, t: 16, b: 30 };
+  const W = wCss - pad.l - pad.r;
+  const H = hCss - pad.t - pad.b;
+  focusView.geom = { pad, W, H };
+
+  const vis = focusVisible();
+  if (!focusView.series.length || !vis.length) {
+    ctx.fillStyle = ink3;
+    ctx.font = '13px ' + css.getPropertyValue('--sans');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(focusView.series.length ? 'All accounts hidden \u2014 tap a legend pill to show one' : 'Add an account with a CSV to see its history here', pad.l + W / 2, pad.t + H / 2);
+    return;
+  }
+
+  const t0 = focusView.t0, t1 = focusView.t1, span = t1 - t0;
+
+  // Y range from what's visible in the current domain (best-fit vertically)
+  let minV = Infinity, maxV = -Infinity;
+  vis.forEach(s => {
+    [valueAtT(s.pts, t0), valueAtT(s.pts, t1)].forEach(v => {
+      if (v == null) return;
+      if (v < minV) minV = v; if (v > maxV) maxV = v;
+    });
+    s.pts.forEach(p => {
+      if (p.t < t0 || p.t > t1) return;
+      if (p.v < minV) minV = p.v; if (p.v > maxV) maxV = p.v;
+    });
+  });
+  if (!isFinite(minV)) { minV = 0; maxV = 100; }
+  if (maxV - minV < 1e-9) { maxV += 100; minV -= 100; }
+  const vPadding = (maxV - minV) * 0.08;
+  let vMin = minV - vPadding, vMax = maxV + vPadding;
+  if (minV >= 0) vMin = Math.max(0, vMin);
+  focusView.vMin = vMin; focusView.vMax = vMax;
+
+  const xOfT = t => pad.l + ((t - t0) / span) * W;
+  const yOfV = v => pad.t + H - ((v - vMin) / (vMax - vMin)) * H;
+
+  // grid + y labels
+  const ticks = niceTicks(vMin, vMax, 5);
+  ctx.font = '11px ' + css.getPropertyValue('--mono');
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+  ctx.strokeStyle = lineCol; ctx.lineWidth = 1;
+  ticks.forEach(t => {
+    if (t < vMin - 1e-6 || t > vMax + 1e-6) return;
+    const y = yOfV(t);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + W, y); ctx.stroke();
+    ctx.fillStyle = ink3;
+    ctx.fillText(fmtMoneyShort(t), pad.l - 8, y);
+  });
+
+  // x labels
+  const xCount = Math.max(3, Math.min(8, Math.floor(W / 130)));
+  const withYear = span > 300 * 864e5;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let i = 0; i < xCount; i++) {
+    const t = t0 + (i / (xCount - 1)) * span;
+    const d = new Date(t);
+    const lbl = withYear
+      ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : fmtDateShort(d);
+    ctx.fillStyle = ink3;
+    ctx.fillText(lbl, xOfT(t), pad.t + H + 8);
+  }
+
+  // selection highlight band (behind series)
+  const sel = focusSelection();
+  if (sel) {
+    const xa = Math.max(pad.l, xOfT(sel[0])), xb = Math.min(pad.l + W, xOfT(sel[1]));
+    ctx.save();
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = accent;
+    ctx.fillRect(xa, pad.t, Math.max(0, xb - xa), H);
+    ctx.restore();
+  }
+
+  // series (clipped to plot area)
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l - 1, pad.t - 1, W + 2, H + 2); ctx.clip();
+  vis.forEach(s => {
+    ctx.beginPath();
+    s.pts.forEach((p, i) => {
+      const x = xOfT(p.t), y = yOfV(p.v);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.isNet ? 3 : 2.25;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (s.isNet) ctx.setLineDash([6, 4]); else ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const last = s.pts.at(-1);
+    if (last.t >= t0 && last.t <= t1) {
+      ctx.beginPath(); ctx.arc(xOfT(last.t), yOfV(last.v), s.isNet ? 4 : 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = s.color; ctx.fill();
+    }
+  });
+  ctx.restore();
+
+  // marker lines + dots (over series)
+  const drawMarker = (t, faded) => {
+    if (t == null || t < t0 || t > t1) return;
+    const x = xOfT(t);
+    ctx.save();
+    ctx.strokeStyle = accent;
+    ctx.globalAlpha = faded ? 0.55 : 0.9;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + H); ctx.stroke();
+    ctx.setLineDash([]);
+    vis.forEach(s => {
+      const v = valueAtT(s.pts, t);
+      if (v == null) return;
+      ctx.beginPath(); ctx.arc(x, yOfV(v), 4, 0, Math.PI * 2);
+      ctx.fillStyle = s.color; ctx.globalAlpha = 1; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = css.getPropertyValue('--bg').trim(); ctx.stroke();
+    });
+    ctx.restore();
+  };
+  if (focusView.touchRange) {
+    drawMarker(focusView.touchRange[0]);
+    drawMarker(focusView.touchRange[1]);
+  } else {
+    drawMarker(focusView.markA, focusView.markB == null);
+    drawMarker(focusView.markB);
+  }
+
+  // hover guide
+  if (focusView.hoverT != null && focusView.hoverT >= t0 && focusView.hoverT <= t1 && !focusView.touchRange) {
+    const x = xOfT(focusView.hoverT);
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = ink3; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + H); ctx.stroke();
+    ctx.restore();
+    vis.forEach(s => {
+      const v = valueAtT(s.pts, focusView.hoverT);
+      if (v == null) return;
+      ctx.beginPath(); ctx.arc(x, yOfV(v), 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = s.color; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, yOfV(v), 6.5, 0, Math.PI * 2);
+      ctx.strokeStyle = s.color; ctx.globalAlpha = 0.3; ctx.lineWidth = 2; ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+  }
+}
+
+/* ---------- coordinate helpers ---------- */
+function focusTAtClientX(clientX) {
+  const rect = $('#focusChart').getBoundingClientRect();
+  const { pad, W } = focusView.geom;
+  const f = Math.max(0, Math.min(1, (clientX - rect.left - pad.l) / W));
+  return focusView.t0 + f * (focusView.t1 - focusView.t0);
+}
+function focusXOfT(t) {
+  const { pad, W } = focusView.geom;
+  return pad.l + ((t - focusView.t0) / (focusView.t1 - focusView.t0)) * W;
+}
+
+/* ---------- open / close ---------- */
+function openAcctFocus() {
+  if (focusFS.filter == null) {
+    focusFS.filter = settings.filter || 'month';
+    focusFS.customMode = settings.customMode || 'range';
+    focusFS.customFrom = settings.customFrom || '';
+    focusFS.customTo = settings.customTo || '';
+    focusFS.customMonth = settings.customMonth;
+    focusFS.customYearM = settings.customYearM;
+    focusFS.customYear = settings.customYear;
+  }
+  if (focusFS.filter === 'custom') initFocusCustomDefaults();
+  focusView.series = buildFocusSeries();
+  focusView.hidden.forEach(id => {
+    if (!focusView.series.some(s => s.id === id)) focusView.hidden.delete(id);
+  });
+  focusView.markA = focusView.markB = null;
+  focusView.touchRange = null;
+  focusView.hoverT = null;
+  focusView.open = true;
+  $('#acctFocus').classList.add('open');
+  syncFocusFilterUI();
+  focusFit();
+  renderFocusLegend();
+  updateFocusRangeLabel();
+  requestAnimationFrame(drawFocusChart);
+}
+
+function closeAcctFocus() {
+  focusView.open = false;
+  focusView.touchRange = null;
+  focusView.hoverT = null;
+  $('#acctFocus').classList.remove('open');
+  $('#focusTooltip').classList.remove('show');
+}
+
+$('#acctExpandBtn').addEventListener('click', openAcctFocus);
+$('#focusCloseBtn').addEventListener('click', closeAcctFocus);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && focusView.open) closeAcctFocus();
+});
+
+/* ---------- mouse: wheel zoom, drag pan, hover, ctrl+click markers ---------- */
+const focusCanvasEl = $('#focusChart');
+let fDrag = null;
+let fSuppressClick = false;
+
+focusCanvasEl.addEventListener('wheel', (e) => {
+  if (!focusView.open || !focusView.geom) return;
+  e.preventDefault();
+  const t = focusTAtClientX(e.clientX);
+  const k = Math.exp(e.deltaY * 0.0016);
+  setFocusDomain(t - (t - focusView.t0) * k, t + (focusView.t1 - t) * k);
+  drawFocusChart();
+}, { passive: false });
+
+focusCanvasEl.addEventListener('mousedown', (e) => {
+  if (e.button !== 0 || !focusView.open) return;
+  fDrag = { x: e.clientX, t0: focusView.t0, t1: focusView.t1, moved: false };
+});
+window.addEventListener('mousemove', (e) => {
+  if (!fDrag || !focusView.open || !focusView.geom) return;
+  const dx = e.clientX - fDrag.x;
+  if (Math.abs(dx) > 4) fDrag.moved = true;
+  if (!fDrag.moved) return;
+  $('#focusTooltip').classList.remove('show');
+  focusView.hoverT = null;
+  const span = fDrag.t1 - fDrag.t0;
+  const dt = -(dx / focusView.geom.W) * span;
+  setFocusDomain(fDrag.t0 + dt, fDrag.t1 + dt);
+  drawFocusChart();
+});
+window.addEventListener('mouseup', () => {
+  if (fDrag && fDrag.moved) fSuppressClick = true;
+  fDrag = null;
+});
+
+focusCanvasEl.addEventListener('click', (e) => {
+  if (fSuppressClick) { fSuppressClick = false; return; }
+  if (!focusView.open || !focusView.geom) return;
+  const rect = focusCanvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const t = focusTAtClientX(e.clientX);
+  if (e.ctrlKey || e.metaKey) {
+    // set marker A, then B; a third ctrl+click starts a fresh selection
+    if (focusView.markA == null || focusView.markB != null) {
+      focusView.markA = t; focusView.markB = null;
+    } else {
+      focusView.markB = t;
+    }
+  } else {
+    // plain click on either set point clears the selection
+    const near = (mt) => mt != null && Math.abs(focusXOfT(mt) - mx) < 12;
+    if (near(focusView.markA) || near(focusView.markB)) {
+      focusView.markA = focusView.markB = null;
+    } else {
+      return;
+    }
+  }
+  renderFocusLegend();
+  updateFocusRangeLabel();
+  drawFocusChart();
+});
+
+focusCanvasEl.addEventListener('mousemove', (e) => {
+  if (!focusView.open || !focusView.geom || (fDrag && fDrag.moved)) return;
+  const { pad, W } = focusView.geom;
+  const rect = focusCanvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  if (mx < pad.l - 4 || mx > pad.l + W + 4) { focusHideTooltip(); return; }
+  focusView.hoverT = focusTAtClientX(e.clientX);
+  drawFocusChart();
+  focusShowTooltip(focusView.hoverT);
+});
+focusCanvasEl.addEventListener('mouseleave', focusHideTooltip);
+
+function focusShowTooltip(t) {
+  const vis = focusVisible();
+  if (!vis.length) return;
+  const tt = $('#focusTooltip');
+  const rows = vis
+    .map(s => ({ name: s.name, color: s.color, value: valueAtT(s.pts, t) }))
+    .filter(s => s.value != null)
+    .sort((a, b) => b.value - a.value)
+    .map(s => `
+      <div class="tt-row">
+        <span class="tt-swatch" style="background:${s.color}"></span>
+        <span class="tt-name">${escapeHtml(s.name)}</span>
+        <span class="tt-val">${fmtMoney(s.value)}</span>
+      </div>
+    `).join('');
+  tt.innerHTML = `<div class="tt-date">${fmtDate(new Date(t))}</div>${rows}`;
+  const wrap = $('#focusCanvasWrap');
+  const { pad } = focusView.geom;
+  tt.classList.add('show');
+  const ttW = tt.offsetWidth, ttH = tt.offsetHeight;
+  let left = focusXOfT(t);
+  left = Math.max(ttW / 2 + 4, Math.min(wrap.clientWidth - ttW / 2 - 4, left));
+  let top = pad.t + 4;
+  tt.style.transform = 'translate(-50%, 0)';
+  tt.style.left = left + 'px';
+  tt.style.top = top + 'px';
+}
+function focusHideTooltip() {
+  focusView.hoverT = null;
+  $('#focusTooltip').classList.remove('show');
+  if (focusView.open) drawFocusChart();
+}
+
+/* ---------- touch: pinch zoom + two-finger range selection ---------- */
+let fTouch = null;
+let fLegendRaf = 0;
+
+function touchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+function touchMidX(touches) {
+  return (touches[0].clientX + touches[1].clientX) / 2;
+}
+
+focusCanvasEl.addEventListener('touchstart', (e) => {
+  if (!focusView.open || !focusView.geom) return;
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    fTouch = {
+      mode: 'pending',
+      d0: touchDist(e.touches),
+      prevD: touchDist(e.touches),
+      prevMid: touchMidX(e.touches),
+    };
+    updateFocusTouchRange(e);
+  } else if (e.touches.length === 1) {
+    // single finger: hover guide (first anchor of a two-finger selection)
+    focusView.hoverT = focusTAtClientX(e.touches[0].clientX);
+    drawFocusChart();
+  }
+}, { passive: false });
+
+focusCanvasEl.addEventListener('touchmove', (e) => {
+  if (!focusView.open || !focusView.geom) return;
+  if (e.touches.length === 2 && fTouch) {
+    e.preventDefault();
+    const d = touchDist(e.touches);
+    if (fTouch.mode === 'pending' && Math.abs(d - fTouch.d0) > 32) {
+      // fingers moving apart/together -> pinch zoom, not range selection
+      fTouch.mode = 'pinch';
+      focusView.touchRange = null;
+      renderFocusLegend();
+      updateFocusRangeLabel();
+    }
+    if (fTouch.mode === 'pinch') {
+      const mid = touchMidX(e.touches);
+      const scale = fTouch.prevD / Math.max(1, d);
+      const tMid = focusTAtClientX(mid);
+      let a = tMid - (tMid - focusView.t0) * scale;
+      let b = tMid + (focusView.t1 - tMid) * scale;
+      const dt = -((mid - fTouch.prevMid) / focusView.geom.W) * (b - a);
+      setFocusDomain(a + dt, b + dt);
+      fTouch.prevD = d;
+      fTouch.prevMid = mid;
+      drawFocusChart();
+    } else {
+      updateFocusTouchRange(e);
+    }
+  } else if (e.touches.length === 1 && !fTouch) {
+    e.preventDefault();
+    focusView.hoverT = focusTAtClientX(e.touches[0].clientX);
+    drawFocusChart();
+  }
+}, { passive: false });
+
+focusCanvasEl.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2 && fTouch) {
+    // fingers let go -> clear the highlighted range, stats revert to filter
+    if (fTouch.mode !== 'pinch') {
+      focusView.touchRange = null;
+      renderFocusLegend();
+      updateFocusRangeLabel();
+    }
+    fTouch = null;
+  }
+  if (e.touches.length === 0) focusView.hoverT = null;
+  drawFocusChart();
+});
+focusCanvasEl.addEventListener('touchcancel', () => {
+  if (fTouch && fTouch.mode !== 'pinch') {
+    focusView.touchRange = null;
+    renderFocusLegend();
+    updateFocusRangeLabel();
+  }
+  fTouch = null;
+  focusView.hoverT = null;
+  drawFocusChart();
+});
+
+function updateFocusTouchRange(e) {
+  focusView.hoverT = null;
+  focusView.touchRange = [
+    focusTAtClientX(e.touches[0].clientX),
+    focusTAtClientX(e.touches[1].clientX),
+  ];
+  updateFocusRangeLabel();
+  drawFocusChart();
+  if (!fLegendRaf) {
+    fLegendRaf = requestAnimationFrame(() => {
+      fLegendRaf = 0;
+      if (focusView.touchRange) renderFocusLegend();
+    });
+  }
+}
+
+/* ============================================================
    SETTINGS MODAL (accordion)
    ============================================================ */
 function openSettings() {
@@ -3343,13 +4528,18 @@ $('#backupTile').addEventListener('click', () => doBackup());
 function doBackup() {
   const payload = {
     app: 'BudgetBuddy',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     expenses,
     accounts,
+    goals,
+    debts,
     settings,
   };
   downloadFile('budgetbuddy.json', JSON.stringify(payload, null, 2), 'application/json');
+  settings.lastBackup = Date.now();
+  save(STORE_SETTINGS, settings);
+  checkBackupReminder();
   toast('Backed up to budgetbuddy.json');
 }
 
@@ -3407,9 +4597,23 @@ async function importBackup(text) {
       });
   }
   if (Array.isArray(data.accounts)) accounts = importAccountsJson(JSON.stringify(data.accounts));
+  if (Array.isArray(data.goals)) {
+    goals = data.goals.filter(g => g && g.name).map(g => ({
+      id: g.id || uid(), name: String(g.name), target: +g.target || 0, saved: +g.saved || 0,
+      targetDate: g.targetDate || null, createdAt: g.createdAt || null,
+    }));
+    save(STORE_GOALS, goals);
+  }
+  if (Array.isArray(data.debts)) {
+    debts = data.debts.filter(d => d && d.name).map(d => ({
+      id: d.id || uid(), name: String(d.name), balance: +d.balance || 0, apr: +d.apr || 0, minPay: +d.minPay || 0,
+    }));
+    save(STORE_DEBTS, debts);
+  }
   if (data.settings && typeof data.settings === 'object') {
     settings = Object.assign({}, settings, data.settings);
     if (!Array.isArray(settings.modifiers)) settings.modifiers = [];
+    if (!settings.catBudgets || typeof settings.catBudgets !== 'object') settings.catBudgets = {};
   }
   save(STORE_EXP, expenses);
   save(STORE_ACCT, accounts);
@@ -3451,6 +4655,8 @@ $('#purgeConfirmBtn').addEventListener('click', (e) => {
   localStorage.removeItem(STORE_EXP);
   localStorage.removeItem(STORE_ACCT);
   localStorage.removeItem(STORE_SETTINGS);
+  localStorage.removeItem(STORE_GOALS);
+  localStorage.removeItem(STORE_DEBTS);
   closeSettings();
   toast('All data purged \u2014 reloading\u2026');
   setTimeout(() => location.reload(), 600);
@@ -3460,13 +4666,574 @@ $('#purgeConfirmBtn').addEventListener('click', (e) => {
    TOAST
    ============================================================ */
 let toastTimer;
-function toast(msg) {
+function toast(msg, undoFn) {
   const t = $('#toast');
-  t.textContent = msg;
+  t.innerHTML = escapeHtml(msg) + (undoFn ? '<button class="toast-undo" id="toastUndo">Undo</button>' : '');
+  if (undoFn) {
+    $('#toastUndo').addEventListener('click', () => {
+      undoFn();
+      t.classList.remove('show');
+    });
+  }
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  toastTimer = setTimeout(() => t.classList.remove('show'), undoFn ? 6000 : 2000);
 }
+
+/* ============================================================
+   SAVINGS GOALS
+   ============================================================ */
+function monthsBetween(a, b) { return Math.max(0, (b - a) / (30.44 * 86400000)); }
+
+function renderGoals() {
+  const grid = $('#goalGrid');
+  $('#goalsSub').textContent = goals.length ? `${goals.length} ${goals.length === 1 ? 'goal' : 'goals'}` : '';
+  if (!goals.length) {
+    grid.innerHTML = `<div class="card mini-empty">No savings goals yet &mdash; tap &ldquo;Add goal&rdquo; to set a target.</div>`;
+    return;
+  }
+  const now = new Date();
+  grid.innerHTML = goals.map(g => {
+    const target = +g.target || 0, saved = Math.max(0, +g.saved || 0);
+    const pct = target > 0 ? (saved / target) * 100 : 0;
+    const done = target > 0 && saved >= target;
+    let meta;
+    if (done) {
+      meta = `<span style="color: var(--good); font-weight:600;">Goal reached</span>`;
+    } else if (g.targetDate) {
+      const due = new Date(g.targetDate + 'T00:00:00');
+      const mLeft = monthsBetween(now, due);
+      if (due < now) {
+        meta = `<span style="color: var(--bad);">Past due ${fmtDate(g.targetDate)}</span> &middot; ${fmtMoney(target - saved)} to go`;
+      } else {
+        const perMo = (target - saved) / Math.max(mLeft, 0.1);
+        let paceTxt = '';
+        if (g.createdAt) {
+          const mElapsed = monthsBetween(new Date(g.createdAt), now);
+          if (mElapsed >= 0.5 && saved > 0) {
+            const pace = saved / mElapsed;
+            const onTrack = pace >= perMo * 0.98;
+            paceTxt = ` &middot; <span style="color: var(--${onTrack ? 'good' : 'bad'}); font-weight:600;">${onTrack ? 'on track' : 'behind pace'}</span>`;
+          }
+        }
+        meta = `due ${fmtDate(g.targetDate)} &middot; need ${fmtMoney(perMo)}/mo${paceTxt}`;
+      }
+    } else {
+      meta = `${fmtMoney(target - saved)} to go`;
+    }
+    return `
+      <div class="swipe-wrap">
+        ${SWIPE_HINT}
+        <div class="card goal-card swipe-fg" data-goal="${g.id}">
+          <div class="gd-top">
+            <span class="gd-name">${escapeHtml(g.name)}</span>
+            <span class="gd-amt">${fmtMoney(saved)} <span class="gd-of">/ ${fmtMoney(target)}</span></span>
+          </div>
+          <div class="prog"><div class="prog-fill" style="width:${Math.min(100, pct).toFixed(1)}%"></div></div>
+          <div class="gd-meta">${pct.toFixed(0)}% &middot; ${meta}</div>
+        </div>
+      </div>`;
+  }).join('');
+  wireSwipes(grid, 'data-goal', openGoalModal, deleteGoal);
+}
+
+let editingGoalId = null;
+$('#addGoalBtn').addEventListener('click', () => openGoalModal(null));
+function openGoalModal(id) {
+  editingGoalId = id;
+  const g = id ? goals.find(x => x.id === id) : null;
+  $('#goalModalTitle').textContent = g ? 'Edit savings goal' : 'Add savings goal';
+  $('#goalName').value = g ? g.name : '';
+  $('#goalTarget').value = g ? g.target : '';
+  $('#goalSaved').value = g ? g.saved : '';
+  $('#goalDate').value = g && g.targetDate ? g.targetDate : '';
+  $('#goalDeleteBtn').style.display = g ? 'inline-flex' : 'none';
+  $('#goalModal').classList.add('open');
+  setTimeout(() => $('#goalName').focus(), 50);
+}
+$('#goalCancelBtn').addEventListener('click', () => $('#goalModal').classList.remove('open'));
+$('#goalModal').addEventListener('click', (e) => { if (e.target === $('#goalModal')) $('#goalModal').classList.remove('open'); });
+$('#goalDeleteBtn').addEventListener('click', () => {
+  if (!editingGoalId) return;
+  const id = editingGoalId;
+  $('#goalModal').classList.remove('open');
+  deleteGoal(id);
+});
+$('#goalSaveBtn').addEventListener('click', () => {
+  const name = $('#goalName').value.trim();
+  const target = +$('#goalTarget').value;
+  const saved = Math.max(0, +$('#goalSaved').value || 0);
+  const targetDate = $('#goalDate').value || null;
+  if (!name) { alert('Please enter a name.'); return; }
+  if (!(target > 0)) { alert('Please enter a target amount greater than 0.'); return; }
+  if (editingGoalId) {
+    const g = goals.find(x => x.id === editingGoalId);
+    Object.assign(g, { name, target, saved, targetDate });
+    toast('Goal updated');
+  } else {
+    goals.push({ id: uid(), name, target, saved, targetDate, createdAt: new Date().toISOString() });
+    toast('Goal added');
+  }
+  save(STORE_GOALS, goals);
+  $('#goalModal').classList.remove('open');
+  renderGoals();
+});
+function deleteGoal(id) {
+  const idx = goals.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const [removed] = goals.splice(idx, 1);
+  save(STORE_GOALS, goals);
+  renderGoals();
+  toast(`Deleted goal "${removed.name}"`, () => {
+    goals.splice(Math.min(idx, goals.length), 0, removed);
+    save(STORE_GOALS, goals);
+    renderGoals();
+  });
+}
+
+/* ============================================================
+   DEBT TRACKER
+   ============================================================ */
+function payoffAtPayment(balance, apr, payment) {
+  if (!(balance > 0) || !(payment > 0)) return null;
+  const r = (apr || 0) / 100 / 12;
+  if (r > 0 && payment <= balance * r) return null;
+  let b = balance, months = 0, interest = 0;
+  while (b > 0.005 && months < 600) {
+    const i = b * r;
+    interest += i;
+    b = b + i - payment;
+    months++;
+  }
+  if (b > 0.005) return null;
+  return { months, interest };
+}
+function simulateStrategy(list, totalBudget, strategy) {
+  let ds = list.map(d => ({ b: +d.balance || 0, r: (+d.apr || 0) / 100 / 12, min: +d.minPay || 0 })).filter(d => d.b > 0);
+  if (!ds.length) return null;
+  let months = 0, interest = 0;
+  while (ds.some(d => d.b > 0.005) && months < 600) {
+    months++;
+    ds.forEach(d => { if (d.b > 0.005) { const i = d.b * d.r; d.b += i; interest += i; } });
+    let budget = totalBudget;
+    ds.forEach(d => { if (d.b > 0.005) { const p = Math.min(d.min, d.b, Math.max(0, budget)); d.b -= p; budget -= p; } });
+    const open = ds.filter(d => d.b > 0.005).sort(strategy === 'avalanche' ? (a, b) => b.r - a.r : (a, b) => a.b - b.b);
+    for (const d of open) {
+      if (budget <= 0) break;
+      const p = Math.min(budget, d.b);
+      d.b -= p; budget -= p;
+    }
+  }
+  if (ds.some(d => d.b > 0.005)) return null;
+  return { months, interest };
+}
+function fmtMonths(m) {
+  if (m == null) return '\u2014';
+  const y = Math.floor(m / 12), r = m % 12;
+  if (y && r) return `${y}y ${r}m`;
+  if (y) return `${y}y`;
+  return `${m} mo`;
+}
+
+function renderDebts() {
+  const grid = $('#debtGrid');
+  const totalDebt = debts.reduce((s, d) => s + (+d.balance || 0), 0);
+  $('#debtsSub').textContent = debts.length ? `${debts.length} ${debts.length === 1 ? 'debt' : 'debts'} \u00B7 ${fmtMoney(totalDebt)} total` : '';
+  const strat = $('#debtStrategy');
+  if (!debts.length) {
+    grid.innerHTML = `<div class="card mini-empty">No debts tracked &mdash; add a loan or card to see payoff projections.</div>`;
+    strat.hidden = true;
+    return;
+  }
+  grid.innerHTML = debts.map(d => {
+    const po = payoffAtPayment(+d.balance, +d.apr, +d.minPay);
+    let poTxt;
+    if (!(+d.minPay > 0)) poTxt = 'Set a monthly payment to project payoff';
+    else if (!po) poTxt = `<span style="color: var(--bad); font-weight:600;">Payment doesn't cover interest</span>`;
+    else poTxt = `Paid off in <strong style="color: var(--ink);">${fmtMonths(po.months)}</strong> \u00B7 ${fmtMoney(po.interest)} total interest`;
+    return `
+      <div class="swipe-wrap">
+        ${SWIPE_HINT}
+        <div class="card debt-card swipe-fg" data-debt="${d.id}">
+          <div class="gd-top">
+            <span class="gd-name">${escapeHtml(d.name)}</span>
+            <span class="cat-chip"><span class="swatch" style="background: var(--bad);"></span>${(+d.apr || 0).toFixed(2)}% APR</span>
+          </div>
+          <div class="debt-row2">
+            <div class="debt-stat"><div class="dl">Balance</div><div class="dv">${fmtMoney(+d.balance || 0)}</div></div>
+            <div class="debt-stat"><div class="dl">Payment / mo</div><div class="dv">${+d.minPay > 0 ? fmtMoney(+d.minPay) : '\u2014'}</div></div>
+          </div>
+          <div class="gd-meta">${poTxt}</div>
+        </div>
+      </div>`;
+  }).join('');
+  wireSwipes(grid, 'data-debt', openDebtModal, deleteDebt);
+  strat.hidden = false;
+  const exEl = $('#debtExtra');
+  if (document.activeElement !== exEl) exEl.value = settings.debtExtra || '';
+  renderStrategy();
+}
+
+function renderStrategy() {
+  const body = $('#strategyBody');
+  const minSum = debts.reduce((s, d) => s + (+d.minPay || 0), 0);
+  const extra = Math.max(0, +settings.debtExtra || 0);
+  if (!(minSum > 0)) {
+    body.innerHTML = '<div class="ef-note" style="margin:0;">Set monthly payments on your debts to compare payoff strategies.</div>';
+    return;
+  }
+  const budget = minSum + extra;
+  const snow = simulateStrategy(debts, budget, 'snowball');
+  const aval = simulateStrategy(debts, budget, 'avalanche');
+  if (!snow || !aval) {
+    body.innerHTML = '<div class="ef-note" style="margin:0;">Payments don\u2019t cover the interest \u2014 the balance never falls. Raise the payments or the extra amount.</div>';
+    return;
+  }
+  const savings = snow.interest - aval.interest;
+  const best = savings > 1 ? 'avalanche' : (savings < -1 ? 'snowball' : null);
+  body.innerHTML = `
+    <div class="ef-note" style="margin: 0 0 8px;">Paying ${fmtMoney(budget)}/mo total (${fmtMoney(minSum)} minimums${extra ? ' + ' + fmtMoney(extra) + ' extra' : ''}):</div>
+    <div class="strat-rows">
+      <div class="strat-row"${best === 'snowball' ? ' style="border-color: var(--good);"' : ''}>
+        <span class="sr-name">Snowball <span class="sr-sub">smallest balance first</span></span>
+        <span class="sr-val">${fmtMonths(snow.months)} \u00B7 ${fmtMoney(snow.interest)} interest</span>
+      </div>
+      <div class="strat-row"${best === 'avalanche' ? ' style="border-color: var(--good);"' : ''}>
+        <span class="sr-name">Avalanche <span class="sr-sub">highest APR first</span></span>
+        <span class="sr-val">${fmtMonths(aval.months)} \u00B7 ${fmtMoney(aval.interest)} interest</span>
+      </div>
+    </div>
+    <div class="ef-note" style="margin-top: 8px;">${
+      best === 'avalanche' ? `Avalanche saves ${fmtMoney(savings)} in interest vs snowball.` :
+      best === 'snowball' ? `Snowball saves ${fmtMoney(-savings)} in interest here.` :
+      'Both strategies cost about the same here.'}</div>`;
+}
+$('#debtExtra').addEventListener('input', (e) => {
+  settings.debtExtra = Math.max(0, +e.target.value || 0);
+  save(STORE_SETTINGS, settings);
+  renderStrategy();
+});
+
+let editingDebtId = null;
+$('#addDebtBtn').addEventListener('click', () => openDebtModal(null));
+function openDebtModal(id) {
+  editingDebtId = id;
+  const d = id ? debts.find(x => x.id === id) : null;
+  $('#debtModalTitle').textContent = d ? 'Edit debt' : 'Add debt';
+  $('#debtName').value = d ? d.name : '';
+  $('#debtBalance').value = d ? d.balance : '';
+  $('#debtApr').value = d ? d.apr : '';
+  $('#debtMinPay').value = d ? d.minPay : '';
+  $('#debtDeleteBtn').style.display = d ? 'inline-flex' : 'none';
+  $('#debtModal').classList.add('open');
+  setTimeout(() => $('#debtName').focus(), 50);
+}
+$('#debtCancelBtn').addEventListener('click', () => $('#debtModal').classList.remove('open'));
+$('#debtModal').addEventListener('click', (e) => { if (e.target === $('#debtModal')) $('#debtModal').classList.remove('open'); });
+$('#debtDeleteBtn').addEventListener('click', () => {
+  if (!editingDebtId) return;
+  const id = editingDebtId;
+  $('#debtModal').classList.remove('open');
+  deleteDebt(id);
+});
+$('#debtSaveBtn').addEventListener('click', () => {
+  const name = $('#debtName').value.trim();
+  const balance = +$('#debtBalance').value;
+  const apr = Math.max(0, +$('#debtApr').value || 0);
+  const minPay = Math.max(0, +$('#debtMinPay').value || 0);
+  if (!name) { alert('Please enter a name.'); return; }
+  if (!(balance > 0)) { alert('Please enter a balance greater than 0.'); return; }
+  if (editingDebtId) {
+    const d = debts.find(x => x.id === editingDebtId);
+    Object.assign(d, { name, balance, apr, minPay });
+    toast('Debt updated');
+  } else {
+    debts.push({ id: uid(), name, balance, apr, minPay });
+    toast('Debt added');
+  }
+  save(STORE_DEBTS, debts);
+  $('#debtModal').classList.remove('open');
+  renderDebts();
+});
+function deleteDebt(id) {
+  const idx = debts.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const [removed] = debts.splice(idx, 1);
+  save(STORE_DEBTS, debts);
+  renderDebts();
+  toast(`Deleted debt "${removed.name}"`, () => {
+    debts.splice(Math.min(idx, debts.length), 0, removed);
+    save(STORE_DEBTS, debts);
+    renderDebts();
+  });
+}
+
+/* ============================================================
+   EMERGENCY FUND GAUGE
+   ============================================================ */
+function renderEmergency() {
+  const netNow = accounts.reduce((s, a) => {
+    const last = (a.series || []).at(-1);
+    return s + (last ? +last.value || 0 : 0);
+  }, 0);
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const cut = new Date(now); cut.setDate(cut.getDate() - 89);
+  const cutISO = toISO(cut);
+  const tISO = todayISO();
+  const sum = expenses.reduce((s, x) => (x.date >= cutISO && x.date <= tISO) ? s + (+x.amount || 0) : s, 0);
+  let days = 90;
+  if (expenses.length) {
+    const first = expenses.reduce((min, x) => x.date < min ? x.date : min, expenses[0].date);
+    days = Math.max(1, Math.min(90, Math.round((now - new Date(first + 'T00:00:00')) / 86400000) + 1));
+  }
+  const monthly = sum > 0 ? (sum / days) * 30.44 : 0;
+  const monthsEl = $('#efMonths'), fill = $('#efFill'), note = $('#efNote');
+  if (netNow <= 0 || monthly <= 0) {
+    monthsEl.textContent = '\u2014';
+    monthsEl.style.color = 'var(--ink-3)';
+    fill.style.width = '0%';
+    note.textContent = netNow <= 0
+      ? 'Add an account with a balance to size your emergency fund.'
+      : 'Log expenses so we can estimate your average monthly spend.';
+    return;
+  }
+  const months = netNow / monthly;
+  const col = months >= 6 ? 'var(--good)' : months >= 3 ? 'var(--warn)' : 'var(--bad)';
+  monthsEl.textContent = (months >= 10 ? months.toFixed(0) : months.toFixed(1)) + ' months';
+  monthsEl.style.color = col;
+  fill.style.width = Math.min(100, (months / 6) * 100).toFixed(1) + '%';
+  fill.style.background = col;
+  note.textContent = `${fmtMoney(netNow)} across accounts \u00F7 ${fmtMoney(monthly)}/mo average spend (last ${days} days).`;
+}
+
+/* ============================================================
+   MONTH-OVER-MONTH TRENDS
+   ============================================================ */
+function renderTrends() {
+  const el = $('#trendBody');
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const pd = new Date(y, m - 1, 1);
+  const curPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const prevPrefix = `${pd.getFullYear()}-${String(pd.getMonth() + 1).padStart(2, '0')}`;
+  $('#trendLabel').textContent = `${MONTH_NAMES[m]} vs ${MONTH_NAMES[pd.getMonth()]}`;
+  const sumBy = (prefix) => {
+    const byCat = {}; let tot = 0;
+    expenses.forEach(x => {
+      if (x.date.startsWith(prefix)) {
+        const a = +x.amount || 0;
+        tot += a;
+        byCat[x.category] = (byCat[x.category] || 0) + a;
+      }
+    });
+    return { tot, byCat };
+  };
+  const cur = sumBy(curPrefix), prev = sumBy(prevPrefix);
+  if (cur.tot === 0 && prev.tot === 0) {
+    el.innerHTML = '<div class="cat-empty">Log expenses across two months to see trends here.</div>';
+    return;
+  }
+  const dayOfMonth = now.getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  const curAvg = cur.tot / dayOfMonth;
+  const prevAvg = prev.tot / prevDays;
+  const prevToDate = expenses.reduce((s, x) => (x.date.startsWith(prevPrefix) && +x.date.slice(8, 10) <= dayOfMonth) ? s + (+x.amount || 0) : s, 0);
+  const paceDelta = cur.tot - prevToDate;
+  const catIds = new Set([...Object.keys(cur.byCat), ...Object.keys(prev.byCat)]);
+  const shifts = [...catIds]
+    .map(id => ({ id, d: (cur.byCat[id] || 0) - (prev.byCat[id] || 0) }))
+    .filter(s => Math.abs(s.d) >= 0.5)
+    .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))
+    .slice(0, 3);
+  const shiftsHtml = shifts.length ? `
+    <div class="trend-shifts">${shifts.map(s => {
+      const cat = CATEGORIES.find(c => c.id === s.id) || CATEGORIES.at(-1);
+      const up = s.d > 0;
+      return `<div class="trend-shift">
+        <span class="cat-bar-label"><span class="swatch" style="background:${cat.color}"></span>${cat.label}</span>
+        <span class="ts-val" style="color: var(--${up ? 'bad' : 'good'})">${fmtMoney(s.d, true)} vs last month</span>
+      </div>`;
+    }).join('')}</div>` : '';
+  el.innerHTML = `
+    <div class="trend-grid">
+      <div class="trend-cell"><div class="t-label">This month</div><div class="t-val">${fmtMoney(cur.tot)}</div><div class="t-sub">${fmtMoney(curAvg)}/day avg</div></div>
+      <div class="trend-cell"><div class="t-label">Last month</div><div class="t-val">${fmtMoney(prev.tot)}</div><div class="t-sub">${fmtMoney(prevAvg)}/day avg</div></div>
+      <div class="trend-cell"><div class="t-label">Pace vs last month</div><div class="t-val" style="color: var(--${paceDelta > 0 ? 'bad' : 'good'})">${fmtMoney(paceDelta, true)}</div><div class="t-sub">vs ${fmtMoney(prevToDate)} by day ${dayOfMonth}</div></div>
+    </div>
+    ${shiftsHtml}`;
+}
+
+/* ============================================================
+   CATEGORY BUDGETS
+   ============================================================ */
+$('#budgetsBtn').addEventListener('click', () => {
+  const wrap = $('#budgetList');
+  wrap.innerHTML = CATEGORIES.map(c => {
+    const v = +((settings.catBudgets || {})[c.id]) || 0;
+    return `
+      <div class="budget-row">
+        <span class="cat-bar-label"><span class="swatch" style="background:${c.color}"></span>${c.label}</span>
+        <input type="number" class="input mono" data-budget-cat="${c.id}" min="0" step="10" placeholder="&mdash;" value="${v > 0 ? v : ''}" />
+      </div>`;
+  }).join('');
+  $('#budgetModal').classList.add('open');
+});
+$('#budgetCancelBtn').addEventListener('click', () => $('#budgetModal').classList.remove('open'));
+$('#budgetModal').addEventListener('click', (e) => { if (e.target === $('#budgetModal')) $('#budgetModal').classList.remove('open'); });
+$('#budgetSaveBtn').addEventListener('click', () => {
+  const map = {};
+  $$('[data-budget-cat]').forEach(inp => {
+    const v = +inp.value;
+    if (v > 0) map[inp.dataset.budgetCat] = v;
+  });
+  settings.catBudgets = map;
+  save(STORE_SETTINGS, settings);
+  $('#budgetModal').classList.remove('open');
+  renderCategoryBars();
+  toast('Category budgets saved');
+});
+
+/* ============================================================
+   EXPENSE LIST TOOLS (search / filter / sort)
+   ============================================================ */
+$('#expCatFilter').innerHTML = '<option value="all">All categories</option>' +
+  CATEGORIES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+$('#expSearch').addEventListener('input', (e) => { expSearch = e.target.value.trim(); renderTable(); });
+$('#expCatFilter').addEventListener('change', (e) => { expCatFilter = e.target.value; renderTable(); });
+document.querySelector('#tableCard .exp-head').addEventListener('click', (e) => {
+  const el = e.target.closest('[data-sort]');
+  if (!el) return;
+  const k = el.dataset.sort;
+  if (expSort.key === k) expSort.dir *= -1;
+  else expSort = { key: k, dir: (k === 'date' || k === 'amount') ? -1 : 1 };
+  renderTable();
+});
+
+/* ============================================================
+   QUICK ADD + VENDOR AUTOCOMPLETE
+   ============================================================ */
+fillCategoryOptions($('#qaCategory'));
+function updateVendorDatalist() {
+  const dl = $('#vendorList');
+  if (!dl) return;
+  const seen = new Map();
+  [...expenses].reverse().forEach(x => {
+    const v = (x.vendor || '').trim();
+    if (v && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v);
+  });
+  dl.innerHTML = [...seen.values()].slice(0, 60).map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+}
+function suggestCategory(vendorEl, catEl) {
+  const v = vendorEl.value.trim().toLowerCase();
+  if (!v) return;
+  const match = [...expenses].reverse().find(x => (x.vendor || '').trim().toLowerCase() === v);
+  if (match) catEl.value = match.category;
+}
+$('#qaVendor').addEventListener('input', () => suggestCategory($('#qaVendor'), $('#qaCategory')));
+$('#newVendor').addEventListener('input', () => suggestCategory($('#newVendor'), $('#newCategory')));
+
+$('#fab').addEventListener('click', () => {
+  $('#qaDate').value = todayISO();
+  $('#qaVendor').value = '';
+  $('#qaAmount').value = '';
+  $('#quickModal').classList.add('open');
+  setTimeout(() => $('#qaAmount').focus(), 50);
+});
+$('#qaCancelBtn').addEventListener('click', () => $('#quickModal').classList.remove('open'));
+$('#quickModal').addEventListener('click', (e) => { if (e.target === $('#quickModal')) $('#quickModal').classList.remove('open'); });
+$('#qaForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const date = $('#qaDate').value;
+  const category = $('#qaCategory').value;
+  const vendor = $('#qaVendor').value.trim();
+  const amount = +$('#qaAmount').value;
+  if (!date || !category || !(amount > 0)) return;
+  expenses.push({ id: uid(), date, category, vendor, amount });
+  save(STORE_EXP, expenses);
+  $('#quickModal').classList.remove('open');
+  redrawAll();
+  toast('Expense added');
+});
+
+/* ============================================================
+   EXPENSE CHART HOVER TOOLTIP
+   ============================================================ */
+function onExpChartHover(e) {
+  if (!expChartState || !expChartState.series.length) { hideExpTooltip(); return; }
+  const { pad, W, H, series, type, maxY } = expChartState;
+  const c = expCanvas;
+  const rect = c.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (c.clientWidth / rect.width);
+  if (mx < pad.l - 4 || mx > pad.l + W + 4) { hideExpTooltip(); return; }
+  const f = Math.max(0, Math.min(1, (mx - pad.l) / W));
+  const idx = Math.round(f * (series.length - 1));
+  const pt = series[idx];
+  drawExpenseChart();
+  const ctx = c.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(document.documentElement);
+  const ink3 = css.getPropertyValue('--ink-3').trim();
+  const x = pad.l + (series.length <= 1 ? W / 2 : (idx / (series.length - 1)) * W);
+  const yPix = pad.t + H - (pt.y / maxY) * H;
+  ctx.save();
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = ink3;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + H); ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(x, yPix, 4.5, 0, Math.PI * 2);
+  ctx.fillStyle = css.getPropertyValue('--ink').trim(); ctx.fill();
+  const dayAmt = pt.y - (idx > 0 ? series[idx - 1].y : 0);
+  const tt = $('#expTooltip');
+  const head = type === 'today' ? `Entry #${idx + 1}` : fmtDate(pt.date);
+  tt.innerHTML = `<div class="tt-date">${head}</div>
+    <div class="tt-row"><span class="tt-name">Cumulative</span><span class="tt-val">${fmtMoney(pt.y)}</span></div>
+    <div class="tt-row"><span class="tt-name">${type === 'today' ? 'This entry' : 'That day'}</span><span class="tt-val">${fmtMoney(dayAmt)}</span></div>`;
+  const wrap = $('#expCanvasWrap');
+  tt.classList.add('show');
+  const ttW = tt.offsetWidth;
+  const left = Math.max(ttW / 2 + 4, Math.min(wrap.clientWidth - ttW / 2 - 4, x));
+  tt.style.left = left + 'px';
+  tt.style.top = (pad.t - 10) + 'px';
+  tt.style.transform = 'translate(-50%, -100%)';
+  if (pad.t - 10 - tt.offsetHeight < 0) {
+    tt.style.top = (pad.t + 10) + 'px';
+    tt.style.transform = 'translate(-50%, 0)';
+  }
+}
+function hideExpTooltip() {
+  const tt = $('#expTooltip');
+  if (tt) tt.classList.remove('show');
+  if (expChartState) drawExpenseChart();
+}
+expCanvas.addEventListener('mousemove', onExpChartHover);
+expCanvas.addEventListener('mouseleave', hideExpTooltip);
+
+/* ============================================================
+   BACKUP REMINDER
+   ============================================================ */
+function checkBackupReminder() {
+  const banner = $('#backupBanner');
+  if (!banner) return;
+  const hasData = expenses.length + accounts.length + goals.length + debts.length > 0;
+  const now = Date.now();
+  const due = hasData && (!settings.lastBackup || now - settings.lastBackup > 30 * 86400000);
+  const snoozed = settings.backupSnoozedAt && now - settings.backupSnoozedAt < 7 * 86400000;
+  const show = !!(due && !snoozed);
+  banner.hidden = !show;
+  if (show) {
+    $('#backupBannerText').textContent = settings.lastBackup
+      ? `Last backup was ${Math.round((now - settings.lastBackup) / 86400000)} days ago \u2014 save a fresh copy?`
+      : 'Your data lives only in this browser \u2014 take a backup so it can\u2019t be lost.';
+  }
+}
+$('#bannerBackupBtn').addEventListener('click', doBackup);
+$('#bannerLaterBtn').addEventListener('click', () => {
+  settings.backupSnoozedAt = Date.now();
+  save(STORE_SETTINGS, settings);
+  checkBackupReminder();
+});
 
 /* ============================================================
    REDRAW + RESIZE
@@ -3477,6 +5244,17 @@ function redrawAll() {
   renderAccounts();
   renderModifiers();
   renderGraph();
+  if (focusView.open) {
+    focusView.series = buildFocusSeries();
+    renderFocusLegend();
+    drawFocusChart();
+  }
+  renderGoals();
+  renderDebts();
+  renderEmergency();
+  renderTrends();
+  updateVendorDatalist();
+  checkBackupReminder();
 }
 
 let resizeRaf;
@@ -3485,6 +5263,7 @@ window.addEventListener('resize', () => {
   resizeRaf = requestAnimationFrame(() => {
     drawExpenseChart();
     drawAccountsChart();
+    if (focusView.open) drawFocusChart();
   });
 });
 
