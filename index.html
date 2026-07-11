@@ -885,6 +885,52 @@
   .acct-value .delta { font-size: 12px; margin-top: 2px; font-family: var(--mono); }
   .acct-grid > .swipe-wrap { border-radius: var(--radius); box-shadow: var(--shadow-sm); }
   .acct-card.swipe-fg { border-radius: inherit; box-shadow: none; }
+  .static-val-btn {
+    font-family: var(--mono); font-weight: 600; font-size: 18px; letter-spacing: -0.01em;
+    color: var(--ink); background: none; border: none;
+    padding: 2px 5px; margin: -2px -5px; border-radius: var(--radius-xs);
+    cursor: text; text-align: right;
+  }
+  .static-val-btn:hover { background: var(--bg-sunken); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .static-edit-input { width: 132px; text-align: right; font-size: 18px; padding: 4px 7px; }
+  .acct-card.static-acct .acct-mark { border-radius: var(--radius-sm); }
+
+  /* ---------- emergency fund account picker ---------- */
+  .ef-acct-select { position: relative; margin-bottom: 12px; }
+  .ef-acct-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 11px; font-size: 12px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg-elev); color: var(--ink-2); cursor: pointer;
+  }
+  .ef-acct-btn:hover { border-color: var(--line-strong); color: var(--ink); }
+  .ef-acct-btn .caret { transition: transform .15s ease; }
+  .ef-acct-btn.open .caret { transform: rotate(180deg); }
+  .ef-acct-menu {
+    position: absolute; left: 0; top: calc(100% + 6px); z-index: 30;
+    min-width: 240px; max-height: 300px; overflow: auto;
+    background: var(--bg-elev); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow-md);
+    padding: 6px; display: none;
+  }
+  .ef-acct-menu.open { display: block; }
+  .ef-acct-opt {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 8px 10px; border: none; background: none;
+    border-radius: var(--radius-xs); font-size: 13px; color: var(--ink-2);
+    cursor: pointer; text-align: left; font-family: inherit;
+  }
+  .ef-acct-opt:hover { background: var(--bg-sunken); }
+  .ef-acct-opt .chk {
+    width: 17px; height: 17px; border-radius: 5px; flex-shrink: 0; color: #fff;
+    border: 1.5px solid var(--line-strong);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ef-acct-opt.on .chk { background: var(--accent); border-color: var(--accent); }
+  .ef-acct-opt .chk svg { display: none; width: 11px; height: 11px; }
+  .ef-acct-opt.on .chk svg { display: block; }
+  .ef-acct-opt .nm { flex: 1; }
+  .ef-acct-empty { padding: 12px 10px; font-size: 12px; color: var(--ink-3); }
 
   /* ---------- modal ---------- */
   .modal-backdrop {
@@ -1294,7 +1340,7 @@
 
         <div class="chart-card card" style="margin-top: 6px;">
           <div class="chart-meta">
-            <span>Account value over time</span>
+            <span>Account Growth</span>
             <span id="acctLegend" style="display:flex; gap:14px; flex-wrap:wrap;"></span>
           </div>
           <div class="canvas-wrap" id="acctCanvasWrap">
@@ -1310,6 +1356,14 @@
           <div class="ef-top">
             <span class="ef-title">Emergency fund</span>
             <span class="ef-months" id="efMonths">&mdash;</span>
+          </div>
+          <div class="ef-acct-select" id="efAcctSelect">
+            <button class="ef-acct-btn" id="efAcctBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              <span id="efAcctBtnLabel">Select accounts</span>
+              <svg class="caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="ef-acct-menu" id="efAcctMenu"></div>
           </div>
           <div class="prog"><div class="prog-fill" id="efFill" style="width:0%"></div></div>
           <div class="ef-scale"><span>0</span><span>3 mo</span><span>6+ mo</span></div>
@@ -1622,7 +1676,14 @@
         <input type="text" id="acctName" class="input" placeholder="e.g. First National" />
       </div>
       <div class="field">
-        <label>Import CSV (optional)</label>
+        <label>How to track this account</label>
+        <div class="filters" id="acctMode" style="margin-bottom:0;">
+          <button type="button" class="pill active" data-amode="csv">Import CSV</button>
+          <button type="button" class="pill" data-amode="amount">Fixed amount</button>
+        </div>
+      </div>
+      <div class="field" data-apane="csv">
+        <label>Value history</label>
         <button type="button" class="btn" id="acctCsvBtn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           Choose CSV file&hellip;
@@ -1631,6 +1692,13 @@
         <div id="acctCsvStatus" style="font-size:12px; color: var(--ink-3); font-family: var(--mono);"></div>
         <div style="font-size:11px; color: var(--ink-3);">
           CSV must have columns: <span class="mono" style="font-family:var(--mono);">Date</span>, <span class="mono" style="font-family:var(--mono);">Total Value</span>
+        </div>
+      </div>
+      <div class="field" data-apane="amount" style="display:none;">
+        <label for="acctAmount">Account value ($)</label>
+        <input type="number" id="acctAmount" class="input mono" min="0" step="0.01" placeholder="0.00" />
+        <div style="font-size:11px; color: var(--ink-3);">
+          Added as a lump sum to your total net worth. Not charted as its own line â€” its value is editable anytime.
         </div>
       </div>
     </div>
@@ -1972,7 +2040,7 @@
 <!-- ============== ACCOUNT GRAPH FOCUS (EXPANDED) VIEW ============== -->
 <div class="acct-focus" id="acctFocus" role="dialog" aria-label="Account graph view">
   <div class="af-head">
-    <h2>Account value over time</h2>
+    <h2>Account Growth</h2>
     <span class="af-range" id="focusRangeLabel"></span>
     <button class="icon-btn af-close" id="focusCloseBtn" title="Exit graph view" aria-label="Exit graph view">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -2106,6 +2174,7 @@ let accounts = load(STORE_ACCT, null);
 let settings = load(STORE_SETTINGS, null) || { monthlyLimit: 5000, filter: 'month', customMode: 'range', customFrom: null, customTo: null, customMonth: null, customYearM: null, customYear: null, theme: 'light', modifiers: [] };
 if (!settings.customMode) settings.customMode = 'range';
 if (!Array.isArray(settings.modifiers)) settings.modifiers = [];
+if (!Array.isArray(settings.efAccounts)) settings.efAccounts = [];
 if (settings.donutView !== 'category' && settings.donutView !== 'budget') settings.donutView = 'category';
 // Migrate old 'year' filter (which meant trailing-year) to 'ytd'
 if (settings.filter === 'year') settings.filter = 'ytd';
@@ -3319,24 +3388,29 @@ function pickFile(accept) {
    ACCOUNTS VIEW
    ============================================================ */
 const acctGrid = $('#acctGrid');
+function staticAccounts() { return accounts.filter(a => a.static); }
+function staticTotal() { return accounts.reduce((s, a) => a.static ? s + (+a.value || 0) : s, 0); }
 function renderAccounts() {
   $('#acctSubtitle').textContent = `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} tracked`;
 
   // Total net worth = sum of each account's latest data point.
   // Also compute the change since the earliest combined snapshot for a delta.
+  const sTotal = staticTotal();
   const netNow = accounts.reduce((s, a) => {
+    if (a.static) return s + (+a.value || 0);
     const last = (a.series || []).at(-1);
     return s + (last ? +last.value || 0 : 0);
   }, 0);
-  const accountsWithData = accounts.filter(a => (a.series || []).length > 0);
+  const accountsWithData = accounts.filter(a => !a.static && (a.series || []).length > 0);
   const netBlock = $('#netWorthBlock');
-  if (accountsWithData.length === 0) {
+  if (accountsWithData.length === 0 && staticAccounts().length === 0) {
     netBlock.hidden = true;
   } else {
     netBlock.hidden = false;
     $('#netWorthValue').textContent = fmtMoney(netNow);
-    // Earliest combined snapshot: pick each account's first datapoint and sum.
-    const netStart = accountsWithData.reduce((s, a) => s + (+a.series[0].value || 0), 0);
+    // Earliest combined snapshot: pick each account's first datapoint and sum,
+    // plus static accounts (flat) so the delta reflects only tracked movement.
+    const netStart = accountsWithData.reduce((s, a) => s + (+a.series[0].value || 0), 0) + sTotal;
     const netDelta = netNow - netStart;
     const netPct = netStart ? (netDelta / netStart) * 100 : 0;
     const deltaEl = $('#netWorthDelta');
@@ -3356,6 +3430,23 @@ function renderAccounts() {
       </div>`;
   } else {
     acctGrid.innerHTML = accounts.map(a => {
+      const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+      if (a.static) {
+        return `
+        <div class="swipe-wrap">
+          ${SWIPE_HINT}
+          <div class="card acct-card static-acct swipe-fg" data-acct="${a.id}">
+            <div class="acct-mark" style="background:${a.color}">${initials}</div>
+            <div class="acct-info">
+              <div class="name">${escapeHtml(a.name)}</div>
+              <div class="meta">Fixed amount Â· in net worth</div>
+            </div>
+            <div class="acct-value">
+              <button type="button" class="static-val-btn" data-static-edit="${a.id}" title="Click to edit value">${fmtMoney(+a.value || 0)}</button>
+            </div>
+          </div>
+        </div>`;
+      }
       const series = a.series || [];
       const latest = series.at(-1);
       const first = series[0];
@@ -3363,7 +3454,6 @@ function renderAccounts() {
       const delta = first && latest ? latest.value - first.value : 0;
       const pct = first && first.value ? (delta / first.value) * 100 : 0;
       const points = series.length;
-      const initials = a.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
       const deltaColor = delta >= 0 ? 'var(--good)' : 'var(--bad)';
       return `
         <div class="swipe-wrap">
@@ -3391,9 +3481,33 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-acctGrid.addEventListener('click', () => {
-  // Tapping an account card does nothing â€” edit/delete are swipe gestures now.
+acctGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-static-edit]');
+  if (btn) { e.stopPropagation(); enterStaticEdit(btn); }
 });
+function enterStaticEdit(btn) {
+  const id = btn.dataset.staticEdit;
+  const a = accounts.find(x => x.id === id);
+  if (!a || !a.static) return;
+  const cell = btn.parentNode;
+  cell.innerHTML = `<input type="number" class="input mono static-edit-input" step="0.01" min="0" value="${+a.value || 0}" />`;
+  const inp = cell.querySelector('input');
+  inp.focus(); inp.select();
+  let done = false;
+  const commit = (persist) => {
+    if (done) return; done = true;
+    if (persist) {
+      const v = +inp.value;
+      if (Number.isFinite(v) && v >= 0) { a.value = Math.round(v * 100) / 100; save(STORE_ACCT, accounts); }
+    }
+    redrawAll();
+  };
+  inp.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); commit(true); }
+    else if (ev.key === 'Escape') { ev.preventDefault(); commit(false); }
+  });
+  inp.addEventListener('blur', () => commit(true));
+}
 function deleteAccount(id) {
   const idx = accounts.findIndex(x => x.id === id);
   if (idx < 0) return;
@@ -3410,21 +3524,41 @@ function deleteAccount(id) {
 /* ---------- account modal ---------- */
 let editingAcctId = null;
 let pendingSeries = null;
+let acctMode = 'csv';
+
+function setAcctMode(m) {
+  acctMode = m;
+  $$('.pill', $('#acctMode')).forEach(p => p.classList.toggle('active', p.dataset.amode === m));
+  $$('[data-apane]', $('#acctModal')).forEach(el => el.style.display = (el.dataset.apane === m) ? '' : 'none');
+}
+$('#acctMode').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pill'); if (!btn) return;
+  setAcctMode(btn.dataset.amode);
+});
 
 $('#addAcctBtn').addEventListener('click', () => openAccountModal(null));
 function openAccountModal(id) {
   editingAcctId = id;
   pendingSeries = null;
+  $('#acctAmount').value = '';
   if (id) {
     const a = accounts.find(x => x.id === id);
     $('#acctModalTitle').textContent = 'Edit account';
     $('#acctName').value = a.name;
-    $('#acctCsvStatus').textContent = `${(a.series || []).length} data points stored. Importing CSV replaces them.`;
+    if (a.static) {
+      setAcctMode('amount');
+      $('#acctAmount').value = (a.value != null) ? a.value : '';
+      $('#acctCsvStatus').textContent = '';
+    } else {
+      setAcctMode('csv');
+      $('#acctCsvStatus').textContent = `${(a.series || []).length} data points stored. Importing CSV replaces them.`;
+    }
     $('#acctDeleteBtn').style.display = 'inline-flex';
   } else {
     $('#acctModalTitle').textContent = 'Add account';
     $('#acctName').value = '';
     $('#acctCsvStatus').textContent = '';
+    setAcctMode('csv');
     $('#acctDeleteBtn').style.display = 'none';
   }
   $('#acctModal').classList.add('open');
@@ -3441,20 +3575,36 @@ $('#acctDeleteBtn').addEventListener('click', () => {
 $('#acctSaveBtn').addEventListener('click', () => {
   const name = $('#acctName').value.trim();
   if (!name) { alert('Please enter a name.'); return; }
-  if (editingAcctId) {
-    const a = accounts.find(x => x.id === editingAcctId);
-    a.name = name;
-    if (pendingSeries) a.series = pendingSeries;
-    save(STORE_ACCT, accounts);
-    toast('Account updated');
+  if (acctMode === 'amount') {
+    const v = +$('#acctAmount').value;
+    if (!Number.isFinite(v) || v < 0) { alert('Please enter a valid dollar amount.'); return; }
+    const val = Math.round(v * 100) / 100;
+    if (editingAcctId) {
+      const a = accounts.find(x => x.id === editingAcctId);
+      a.name = name; a.static = true; a.value = val; a.series = [];
+      toast('Account updated');
+    } else {
+      const color = ACCOUNT_COLORS[accounts.length % ACCOUNT_COLORS.length];
+      accounts.push({ id: uid(), name, color, static: true, value: val, series: [] });
+      toast('Account added');
+    }
   } else {
-    const color = ACCOUNT_COLORS[accounts.length % ACCOUNT_COLORS.length];
-    accounts.push({ id: uid(), name, color, series: pendingSeries || [] });
-    save(STORE_ACCT, accounts);
-    toast('Account added');
+    if (editingAcctId) {
+      const a = accounts.find(x => x.id === editingAcctId);
+      a.name = name;
+      delete a.static; delete a.value;
+      if (pendingSeries) a.series = pendingSeries;
+      if (!Array.isArray(a.series)) a.series = [];
+      toast('Account updated');
+    } else {
+      const color = ACCOUNT_COLORS[accounts.length % ACCOUNT_COLORS.length];
+      accounts.push({ id: uid(), name, color, series: pendingSeries || [] });
+      toast('Account added');
+    }
   }
+  save(STORE_ACCT, accounts);
   $('#acctModal').classList.remove('open');
-  renderAccounts();
+  redrawAll();
 });
 
 $('#acctCsvBtn').addEventListener('click', () => $('#acctCsvFile').click());
@@ -3576,6 +3726,9 @@ function buildAcctSeriesAll() {
       });
       return { date, value: sum };
     });
+    // Lump-sum fixed-amount accounts into every net worth data point.
+    const sAdd = staticTotal();
+    if (sAdd) netPoints.forEach(p => p.value += sAdd);
     const netColor = css.getPropertyValue('--ink').trim() || '#111';
     allSeries.push({
       id: '__net__',
@@ -4319,13 +4472,9 @@ focusCanvasEl.addEventListener('click', (e) => {
       focusView.markB = t;
     }
   } else {
-    // plain click on either set point clears the selection
-    const near = (mt) => mt != null && Math.abs(focusXOfT(mt) - mx) < 12;
-    if (near(focusView.markA) || near(focusView.markB)) {
-      focusView.markA = focusView.markB = null;
-    } else {
-      return;
-    }
+    // any plain click while a range is set clears it (whether on a marker or elsewhere)
+    if (focusView.markA == null && focusView.markB == null) return;
+    focusView.markA = focusView.markB = null;
   }
   renderFocusLegend();
   updateFocusRangeLabel();
@@ -4972,7 +5121,11 @@ function deleteDebt(id) {
    EMERGENCY FUND GAUGE
    ============================================================ */
 function renderEmergency() {
+  renderEfAccountMenu();
+  const sel = settings.efAccounts || [];
   const netNow = accounts.reduce((s, a) => {
+    if (!sel.includes(a.id)) return s;
+    if (a.static) return s + (+a.value || 0);
     const last = (a.series || []).at(-1);
     return s + (last ? +last.value || 0 : 0);
   }, 0);
@@ -4993,7 +5146,9 @@ function renderEmergency() {
     monthsEl.style.color = 'var(--ink-3)';
     fill.style.width = '0%';
     note.textContent = netNow <= 0
-      ? 'Add an account with a balance to size your emergency fund.'
+      ? (sel.length === 0
+          ? 'Choose which accounts count toward your emergency fund.'
+          : 'Add a balance to the selected accounts to size your emergency fund.')
       : 'Log expenses so we can estimate your average monthly spend.';
     return;
   }
@@ -5003,8 +5158,56 @@ function renderEmergency() {
   monthsEl.style.color = col;
   fill.style.width = Math.min(100, (months / 6) * 100).toFixed(1) + '%';
   fill.style.background = col;
-  note.textContent = `${fmtMoney(netNow)} across accounts \u00F7 ${fmtMoney(monthly)}/mo average spend (last ${days} days).`;
+  note.textContent = `${fmtMoney(netNow)} across selected accounts \u00F7 ${fmtMoney(monthly)}/mo average spend (last ${days} days).`;
 }
+
+/* ---------- emergency fund account picker ---------- */
+function renderEfAccountMenu() {
+  const sel = settings.efAccounts || [];
+  const menu = $('#efAcctMenu');
+  const label = $('#efAcctBtnLabel');
+  if (!accounts.length) {
+    menu.innerHTML = '<div class="ef-acct-empty">No accounts yet \u2014 add one first.</div>';
+    label.textContent = 'Select accounts';
+    return;
+  }
+  const chosen = accounts.filter(a => sel.includes(a.id));
+  label.textContent = chosen.length === 0 ? 'Select accounts'
+    : chosen.length === 1 ? chosen[0].name
+    : `${chosen.length} accounts selected`;
+  menu.innerHTML = accounts.map(a => {
+    const on = sel.includes(a.id);
+    return `
+      <button class="ef-acct-opt${on ? ' on' : ''}" type="button" data-ef-acct="${a.id}">
+        <span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        <span class="nm">${escapeHtml(a.name)}</span>
+        <span style="width:9px; height:9px; border-radius:50%; background:${a.color}; flex-shrink:0;"></span>
+      </button>`;
+  }).join('');
+}
+$('#efAcctBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = $('#efAcctMenu');
+  const open = menu.classList.toggle('open');
+  $('#efAcctBtn').classList.toggle('open', open);
+  $('#efAcctBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+$('#efAcctMenu').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-ef-acct]'); if (!btn) return;
+  const id = btn.dataset.efAcct;
+  const list = settings.efAccounts || (settings.efAccounts = []);
+  const i = list.indexOf(id);
+  if (i >= 0) list.splice(i, 1); else list.push(id);
+  save(STORE_SETTINGS, settings);
+  renderEmergency();
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#efAcctSelect')) {
+    $('#efAcctMenu').classList.remove('open');
+    $('#efAcctBtn').classList.remove('open');
+    $('#efAcctBtn').setAttribute('aria-expanded', 'false');
+  }
+});
 
 /* ============================================================
    MONTH-OVER-MONTH TRENDS
